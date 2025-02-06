@@ -17,10 +17,6 @@ jobs:
         run: npm ci
       - name: Install Playwright browsers
         run: npx playwright install --with-deps
-      - name: Start application and wait for it to be ready
-        run: |
-          nohup npm run start &  # start your app in the background
-          npx wait-on http://localhost:3000  # wait until it's accessible
       - name: Run Playwright tests
         run: npm run test
       - uses: actions/upload-artifact@v4
