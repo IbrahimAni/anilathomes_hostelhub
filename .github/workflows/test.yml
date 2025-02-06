@@ -2,7 +2,7 @@ name: e2e-tests
 
 on:
   deployment_status
-
+  
 jobs:
   e2e-tests:
     if: github.event.deployment_status.state == 'success' && contains(github.event.deployment_status.environment, 'Preview')
@@ -29,3 +29,56 @@ jobs:
         run: |
           echo "Running tests against preview URL: $BASE_URL"
           npm run test:e2e
+          
+      - name: Upload test results
+        if: always()
+        uses: actions/upload-artifact@v3
+        with:
+          name: playwright-report
+          path: playwright-report/
+          retention-days: 1  # Keep artifacts for 1 day
+
+      - name: Deploy to GitHub Pages
+        if: always()
+        uses: peaceiris/actions-gh-pages@v3
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: playwright-report
+          destination_dir: reports/${{ github.sha }}
+          keep_files: false  # Don't keep old files
+
+  cleanup-old-reports:
+    needs: e2e-tests
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout gh-pages
+        uses: actions/checkout@v3
+        with:
+          ref: gh-pages
+          
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '18'
+          
+      - name: Delete old reports
+        run: |
+          cd reports
+          for dir in */; do
+            created_time=$(git log -1 --format=%ct "$dir")
+            current_time=$(date +%s)
+            age_hours=$(( (current_time - created_time) / 3600 ))
+            
+            if [ $age_hours -gt 12 ]; then
+              echo "Deleting old report: $dir"
+              rm -rf "$dir"
+            fi
+          done
+          
+      - name: Commit changes
+        run: |
+          git config --global user.name 'github-actions[bot]'
+          git config --global user.email 'github-actions[bot]@users.noreply.github.com'
+          git add -A
+          git diff --quiet && git diff --staged --quiet || git commit -m "Remove reports older than 12 hours"
+          git push
