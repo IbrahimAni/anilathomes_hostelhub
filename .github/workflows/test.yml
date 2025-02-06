@@ -7,11 +7,18 @@ permissions:
   contents: write
   pages: write
   id-token: write
+  deployments: write
 
 jobs:
   e2e-tests:
     if: github.event.deployment_status.state == 'success' && contains(github.event.deployment_status.environment, 'Preview')
     runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    concurrency:
+      group: "pages"
+      cancel-in-progress: false
     
     steps:
       - name: Checkout
@@ -46,8 +53,6 @@ jobs:
       - name: Setup Pages
         if: always()
         uses: actions/configure-pages@v4
-        with:
-          static_site_generator: next
 
       - name: Upload Pages Artifact
         if: always()
@@ -60,11 +65,12 @@ jobs:
         if: always()
         id: deployment
         uses: actions/deploy-pages@v4
+        with:
+          token: ${{ github.token }}
 
       - name: Save Report URL
         if: always()
         run: |
-          TIMESTAMP=$(date +'%Y-%m-%d_%H-%M-%S')
           {
             echo "# 📊 Playwright Test Results"
             echo ""
@@ -80,6 +86,7 @@ jobs:
   cleanup-old-reports:
     needs: e2e-tests
     runs-on: ubuntu-latest
+    if: always()
     steps:
       - name: Checkout gh-pages
         uses: actions/checkout@v4
@@ -93,22 +100,20 @@ jobs:
           
       - name: Delete old reports
         run: |
-          cd reports
-          for dir in */; do
-            created_time=$(git log -1 --format=%ct "$dir")
-            current_time=$(date +%s)
-            age_hours=$(( (current_time - created_time) / 3600 ))
-            
-            if [ $age_hours -gt 12 ]; then
-              echo "Deleting old report: $dir"
-              rm -rf "$dir"
-            fi
-          done
-          
-      - name: Commit changes
-        run: |
-          git config --global user.name 'github-actions[bot]'
-          git config --global user.email 'github-actions[bot]@users.noreply.github.com'
-          git add -A
-          git diff --quiet && git diff --staged --quiet || git commit -m "Remove reports older than 12 hours"
-          git push
+          if [ -d "reports" ]; then
+            cd reports
+            for dir in */; do
+              if [ -d "$dir" ]; then
+                created_time=$(git log -1 --format=%ct "$dir" 2>/dev/null || echo $(date +%s))
+                current_time=$(date +%s)
+                age_hours=$(( (current_time - created_time) / 3600 ))
+                
+                if [ $age_hours -gt 12 ]; then
+                  echo "Deleting old report: $dir"
+                  rm -rf "$dir"
+                fi
+              fi
+            done
+          else
+            echo "Reports directory not found, skipping cleanup"
+          fi
