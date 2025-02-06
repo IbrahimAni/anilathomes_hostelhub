@@ -2,7 +2,12 @@ name: e2e-tests
 
 on:
   deployment_status
-  
+
+permissions:
+  contents: write
+  pages: write
+  id-token: write
+
 jobs:
   e2e-tests:
     if: github.event.deployment_status.state == 'success' && contains(github.event.deployment_status.environment, 'Preview')
@@ -36,16 +41,41 @@ jobs:
         with:
           name: playwright-report
           path: playwright-report/
-          retention-days: 1  # Keep artifacts for 1 day
+          retention-days: 1
+
+      - name: Setup Pages
+        if: always()
+        uses: actions/configure-pages@v4
+        with:
+          static_site_generator: next
+
+      - name: Upload Pages Artifact
+        if: always()
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: playwright-report/
+          retention-days: 1
 
       - name: Deploy to GitHub Pages
         if: always()
-        uses: peaceiris/actions-gh-pages@v3
-        with:
-          github_token: ${{ secrets.GITHUB_TOKEN }}
-          publish_dir: playwright-report
-          destination_dir: reports/${{ github.sha }}
-          keep_files: false  # Don't keep old files
+        id: deployment
+        uses: actions/deploy-pages@v4
+
+      - name: Save Report URL
+        if: always()
+        run: |
+          TIMESTAMP=$(date +'%Y-%m-%d_%H-%M-%S')
+          {
+            echo "# 📊 Playwright Test Results"
+            echo ""
+            echo "### 🌐 Environment Information"
+            echo "- Tested URL: \`${{ env.BASE_URL }}\`"
+            echo "- Branch: \`${{ github.ref_name }}\`"
+            echo "- Commit: \`${{ github.sha }}\`"
+            echo ""
+            echo "### 🔍 Test Reports"
+            echo "📝 [View Report](${{ steps.deployment.outputs.page_url }})"
+          } >> $GITHUB_STEP_SUMMARY
 
   cleanup-old-reports:
     needs: e2e-tests
