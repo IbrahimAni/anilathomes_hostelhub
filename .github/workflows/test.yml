@@ -42,7 +42,7 @@ jobs:
           echo "Running tests against preview URL: $BASE_URL"
           npm run test:e2e
           
-      - name: Upload test results
+      - name: Upload playwright report
         if: always()
         uses: actions/upload-artifact@v4
         with:
@@ -53,6 +53,8 @@ jobs:
       - name: Setup Pages
         if: always()
         uses: actions/configure-pages@v4
+        with:
+          static_site_generator: next
 
       - name: Upload Pages Artifact
         if: always()
@@ -65,8 +67,6 @@ jobs:
         if: always()
         id: deployment
         uses: actions/deploy-pages@v4
-        with:
-          token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Save Report URL
         if: always()
@@ -75,9 +75,9 @@ jobs:
             echo "# 📊 Playwright Test Results"
             echo ""
             echo "### 🌐 Environment Information"
-            echo "- Tested URL: \`${{ env.BASE_URL }}\`"
-            echo "- Branch: \`${{ github.ref_name }}\`"
-            echo "- Commit: \`${{ github.sha }}\`"
+            echo "- Tested URL: \`${{ github.event.client_payload.preview_url }}\`"
+            echo "- Branch: \`${{ github.event.client_payload.ref }}\`"
+            echo "- Commit: \`${{ github.event.client_payload.sha }}\`"
             echo ""
             echo "### 🔍 Test Reports"
             echo "📝 [View Report](${{ steps.deployment.outputs.page_url }})"
