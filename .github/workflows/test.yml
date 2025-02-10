@@ -57,6 +57,9 @@ jobs:
           path: playwright-report/
           retention-days: 1
 
+      - name: Wait for artifact processing
+        run: sleep 15
+
       - name: Deploy to GitHub Pages
         if: always()
         id: deployment
