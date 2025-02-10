@@ -7,8 +7,6 @@ permissions:
   contents: read
   pages: write
   id-token: write
-  deployments: write
-  actions: read
 
 jobs:
   e2e-tests:
@@ -37,11 +35,13 @@ jobs:
           echo "Running tests against preview URL: $BASE_URL"
           npm run test:e2e
 
-      - name: Upload Artifacts
+      - name: Setup Pages
+        uses: actions/configure-pages@v5
+
+      - name: Upload pages artifacts
         uses: actions/upload-artifact@v4
         if: always()
         with:
-          name: playwright-report
           path: playwright-report/
           retention-days: 1
 
@@ -49,8 +49,6 @@ jobs:
         uses: actions/deploy-pages@v3
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
-          timeout: 1200000
-          reporting_interval: 10000 
           
   #     - name: Setup Pages
   #       if: always()
