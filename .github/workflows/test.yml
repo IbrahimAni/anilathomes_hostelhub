@@ -8,8 +8,15 @@ permissions:
   pages: write
   id-token: write
 
+concurrency:
+  group: "pages"
+  cancel-in-progress: false
+
 jobs:
   e2e-tests:
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
     if: github.event.deployment_status.state == 'success' && contains(github.event.deployment_status.environment, 'Preview')
     runs-on: ubuntu-latest
     
@@ -39,14 +46,15 @@ jobs:
         uses: actions/configure-pages@v5
 
       - name: Upload pages artifacts
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-pages-artifact@v3
         if: always()
         with:
           path: playwright-report/
           retention-days: 1
 
-      - name: Deploy Pages
-        uses: actions/deploy-pages@v3
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
           
