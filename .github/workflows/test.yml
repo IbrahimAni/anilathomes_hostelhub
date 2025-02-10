@@ -65,7 +65,7 @@ jobs:
 
       - name: Deploy to GitHub Pages
         if: always()
-        # id: deployment
+        id: deployment
         uses: actions/deploy-pages@v3
 
       - name: Save Report URL
