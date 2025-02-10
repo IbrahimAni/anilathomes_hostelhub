@@ -4,7 +4,7 @@ on:
   deployment_status
 
 permissions:
-  contents: write
+  contents: read
   pages: write
   id-token: write
   deployments: write
@@ -14,12 +14,6 @@ jobs:
   e2e-tests:
     if: github.event.deployment_status.state == 'success' && contains(github.event.deployment_status.environment, 'Preview')
     runs-on: ubuntu-latest
-    environment:
-      name: github-pages
-      url: ${{ steps.deployment.outputs.page_url }}
-    concurrency:
-      group: "pages"
-      cancel-in-progress: false
     
     steps:
       - name: Checkout
@@ -42,7 +36,7 @@ jobs:
         run: |
           echo "Running tests against preview URL: $BASE_URL"
           npm run test:e2e
-
+          
       - name: Setup Pages
         if: always()
         uses: actions/configure-pages@v4
@@ -53,15 +47,22 @@ jobs:
         if: always()
         uses: actions/upload-pages-artifact@v3
         with:
-          name: github-pages
           path: playwright-report/
-          retention-days: 1
 
-      - name: Wait for artifact processing
-        run: sleep 15
-
+  deploy:
+    needs: e2e-tests
+    runs-on: ubuntu-latest
+    
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    
+    concurrency:
+      group: "pages"
+      cancel-in-progress: false
+    
+    steps:
       - name: Deploy to GitHub Pages
-        if: always()
         id: deployment
         uses: actions/deploy-pages@v3
 
@@ -81,7 +82,7 @@ jobs:
           } >> $GITHUB_STEP_SUMMARY
 
   cleanup-old-reports:
-    needs: e2e-tests
+    needs: deploy
     runs-on: ubuntu-latest
     if: always()
     steps:
