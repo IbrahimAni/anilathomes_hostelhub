@@ -7,13 +7,13 @@ const LandingPage = () => {
       <header className="flex justify-between items-center p-4 bg-white">
         <div className="text-2xl font-bold text-[#6c63ff]"></div>
         <nav className="space-x-4">
-          <a href="#" className="text-black hover:underline">
+          <a href="/" className="text-black hover:underline">
             Home
           </a>
-          <a href="#" className="text-black hover:underline">
+          <a href="/" className="text-black hover:underline">
             Hostels
           </a>
-          <a href="#" className="text-black hover:underline">
+          <a href="/" className="text-black hover:underline">
             About
           </a>
           <button className="px-4 py-2 bg-black text-white rounded">
@@ -26,7 +26,7 @@ const LandingPage = () => {
       <main
         className="bg-cover bg-center min-h-[800px]"
         style={{
-          backgroundImage: "url('https://via.placeholder.com/1500x500')",
+          backgroundImage: "url('/assets/hero-background.jpg')", 
         }}
       >
         <div className="bg-black bg-opacity-50 py-16 px-4 text-center">
