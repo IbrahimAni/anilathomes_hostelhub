@@ -42,29 +42,29 @@ jobs:
           echo "Running tests against preview URL: $BASE_URL"
           npm run test:e2e
 
-      - name: Setup Pages
-        uses: actions/configure-pages@v5
-        with:
-          static_site_generator: next
+      # - name: Setup Pages
+      #   uses: actions/configure-pages@v5
+      #   with:
+      #     static_site_generator: next
 
-      - name: Upload pages artifacts
-        uses: actions/upload-pages-artifact@v3
-        if: always()
-        with:
-          path: playwright-report/
-          retention-days: 1
+      # - name: Upload pages artifacts
+      #   uses: actions/upload-pages-artifact@v3
+      #   if: always()
+      #   with:
+      #     path: playwright-report/
+      #     retention-days: 1
 
-      - name: Verify artifact
-        run: |
-          ls -la playwright-report/
-          echo "Checking artifact contents..."
-          find playwright-report/ -type f
+      # - name: Verify artifact
+      #   run: |
+      #     ls -la playwright-report/
+      #     echo "Checking artifact contents..."
+      #     find playwright-report/ -type f
 
-      - name: Deploy to GitHub Pages
-        id: deployment
-        uses: actions/deploy-pages@v4
-        with:
-          artifact_name: github-pages
+      # - name: Deploy to GitHub Pages
+      #   id: deployment
+      #   uses: actions/deploy-pages@v4
+      #   with:
+      #     artifact_name: github-pages
           
   #     - name: Setup Pages
   #       if: always()
