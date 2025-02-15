@@ -3,39 +3,39 @@
 import React from 'react';
 import Image from 'next/image';
 
+const featuredHostels = [
+    {
+        id: 1,
+        name: "Student Haven",
+        location: "KWASU Malete",
+        price: "150,000",
+        image: "/assets/hostel1.svg",
+    },
+    {
+        id: 2,
+        name: "Campus Lodge",
+        location: "Tanke Ilorin",
+        price: "180,000",
+        image: "/assets/hostel1.svg",
+    },
+    {
+        id: 3,
+        name: "Unity Hall",
+        location: "KWASU Malete",
+        price: "200,000",
+        image: "/assets/hostel1.svg",
+    }
+] as const;
+
 const FeaturedHostels = () => {
-    const featuredHostels = [
-        {
-            id: 1,
-            name: "Student Haven",
-            location: "KWASU Malete",
-            price: "150,000",
-            image: "/assets/hostel1.svg",
-        },
-        {
-            id: 2,
-            name: "Campus Lodge",
-            location: "Tanke Ilorin",
-            price: "180,000",
-            image: "/assets/hostel1.svg",
-        },
-        {
-            id: 3,
-            name: "Unity Hall",
-            location: "KWASU Malete",
-            price: "200,000",
-            image: "/assets/hostel1.svg",
-        }
-    ];
-
-    const handleViewDetails = (hostelId: number) => {
+    const handleViewDetails = React.useCallback((hostelId: number) => {
         console.log(`Viewing details for hostel ${hostelId}`);
-    };
+    }, []);
 
-    function onViewDetailsClick(e: React.MouseEvent<HTMLButtonElement>, hostelId: number) {
+    const onViewDetailsClick = React.useCallback((e: React.MouseEvent<HTMLButtonElement>, hostelId: number) => {
         e.preventDefault();
         handleViewDetails(hostelId);
-    }
+    }, [handleViewDetails]);
 
     return (
         <section className="py-20 bg-gray-50">
@@ -56,8 +56,9 @@ const FeaturedHostels = () => {
                                 <Image 
                                     src={hostel.image} 
                                     alt={hostel.name} 
-                                    layout="fill" 
-                                    objectFit="cover" 
+                                    fill
+                                    className="object-cover"
+                                    priority={hostel.id === 1}
                                 />
                             </div>
                             <div className="p-4">
