@@ -11,6 +11,7 @@ export default {
       colors: {
         background: "var(--background)",
         foreground: "var(--foreground)",
+        primary: "#4338CA", // Adding a nice indigo color as primary
       },
     },
   },
