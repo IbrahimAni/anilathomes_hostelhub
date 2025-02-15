@@ -1,3 +1,5 @@
+"use client";
+
 import React from 'react';
 import Image from 'next/image';
 
@@ -25,6 +27,15 @@ const FeaturedHostels = () => {
             image: "/assets/hostel1.svg",
         }
     ];
+
+    const handleViewDetails = (hostelId: number) => {
+        console.log(`Viewing details for hostel ${hostelId}`);
+    };
+
+    function onViewDetailsClick(e: React.MouseEvent<HTMLButtonElement>, hostelId: number) {
+        e.preventDefault();
+        handleViewDetails(hostelId);
+    }
 
     return (
         <section className="py-20 bg-gray-50">
@@ -54,7 +65,10 @@ const FeaturedHostels = () => {
                                 <p className="text-gray-600">{hostel.location}</p>
                                 <div className="mt-4 flex justify-between items-center">
                                     <span className="text-[#6c63ff] font-bold">₦{hostel.price}/year</span>
-                                    <button className="px-4 py-2 text-sm text-[#6c63ff] hover:bg-[#6c63ff] hover:text-white border border-[#6c63ff] rounded transition-colors">
+                                    <button 
+                                        onClick={(e) => onViewDetailsClick(e, hostel.id)}
+                                        className="px-4 py-2 text-sm text-[#6c63ff] hover:bg-[#6c63ff] hover:text-white border border-[#6c63ff] rounded transition-colors"
+                                    >
                                         View Details
                                     </button>
                                 </div>
