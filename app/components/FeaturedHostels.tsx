@@ -1,30 +1,41 @@
+"use client";
+
 import React from 'react';
 import Image from 'next/image';
 
+const featuredHostels = [
+    {
+        id: 1,
+        name: "Student Haven",
+        location: "KWASU Malete",
+        price: "150,000",
+        image: "/assets/hostel1.svg",
+    },
+    {
+        id: 2,
+        name: "Campus Lodge",
+        location: "Tanke Ilorin",
+        price: "180,000",
+        image: "/assets/hostel1.svg",
+    },
+    {
+        id: 3,
+        name: "Unity Hall",
+        location: "KWASU Malete",
+        price: "200,000",
+        image: "/assets/hostel1.svg",
+    }
+] as const;
+
 const FeaturedHostels = () => {
-    const featuredHostels = [
-        {
-            id: 1,
-            name: "Student Haven",
-            location: "KWASU Malete",
-            price: "150,000",
-            image: "/assets/hostel1.svg",
-        },
-        {
-            id: 2,
-            name: "Campus Lodge",
-            location: "Tanke Ilorin",
-            price: "180,000",
-            image: "/assets/hostel1.svg",
-        },
-        {
-            id: 3,
-            name: "Unity Hall",
-            location: "KWASU Malete",
-            price: "200,000",
-            image: "/assets/hostel1.svg",
-        }
-    ];
+    const handleViewDetails = React.useCallback((hostelId: number) => {
+        console.log(`Viewing details for hostel ${hostelId}`);
+    }, []);
+
+    const onViewDetailsClick = React.useCallback((e: React.MouseEvent<HTMLButtonElement>, hostelId: number) => {
+        e.preventDefault();
+        handleViewDetails(hostelId);
+    }, [handleViewDetails]);
 
     return (
         <section className="py-20 bg-gray-50">
@@ -45,8 +56,9 @@ const FeaturedHostels = () => {
                                 <Image 
                                     src={hostel.image} 
                                     alt={hostel.name} 
-                                    layout="fill" 
-                                    objectFit="cover" 
+                                    fill
+                                    className="object-cover"
+                                    priority={hostel.id === 1}
                                 />
                             </div>
                             <div className="p-4">
@@ -54,7 +66,10 @@ const FeaturedHostels = () => {
                                 <p className="text-gray-600">{hostel.location}</p>
                                 <div className="mt-4 flex justify-between items-center">
                                     <span className="text-[#6c63ff] font-bold">₦{hostel.price}/year</span>
-                                    <button className="px-4 py-2 text-sm text-[#6c63ff] hover:bg-[#6c63ff] hover:text-white border border-[#6c63ff] rounded transition-colors">
+                                    <button 
+                                        onClick={(e) => onViewDetailsClick(e, hostel.id)}
+                                        className="px-4 py-2 text-sm text-[#6c63ff] hover:bg-[#6c63ff] hover:text-white border border-[#6c63ff] rounded transition-colors"
+                                    >
                                         View Details
                                     </button>
                                 </div>
