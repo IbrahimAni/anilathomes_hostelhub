@@ -17,7 +17,7 @@ jobs:
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
-    if: github.event.deployment_status.state == 'success' && contains(github.event.deployment_status.environment, 'Preview')
+    if: github.event.deployment_status.state == 'success'
     runs-on: ubuntu-latest
     
     steps:
@@ -35,107 +35,25 @@ jobs:
       - name: Install Playwright Browsers
         run: npx playwright install --with-deps
         
-      - name: Run tests
+      - name: Build Next.js app
+        run: npm run build
+        
+      - name: Start server and run tests
         env:
-          BASE_URL: ${{ github.event.deployment_status.target_url }}
+          PORT: 3000
+          BASE_URL: http://localhost:3000
         run: |
-          echo "Running tests against preview URL: $BASE_URL"
-          npm run test:e2e
+          npm run test:e2e:dev
 
-      - name: Setup Pages
-        uses: actions/configure-pages@v5
-        with:
-          static_site_generator: next
-
-      - name: Upload pages artifacts
+      - name: Upload test results
         uses: actions/upload-pages-artifact@v3
         if: always()
         with:
           path: playwright-report/
           retention-days: 1
 
-      - name: Verify artifact
-        run: |
-          ls -la playwright-report/
-          echo "Checking artifact contents..."
-          find playwright-report/ -type f
-
-      # - name: Deploy to GitHub Pages
-      #   id: deployment
-      #   uses: actions/deploy-pages@v4
-      #   with:
-      #     artifact_name: github-pages
-          
-  #     - name: Setup Pages
-  #       if: always()
-  #       uses: actions/configure-pages@v4
-  #       with:
-  #         static_site_generator: next
-
-  #     - name: Upload Pages Artifact
-  #       if: always()
-  #       uses: actions/upload-pages-artifact@v3
-  #       with:
-  #         path: playwright-report/
-
-  # deploy:
-  #   needs: e2e-tests
-  #   runs-on: ubuntu-latest
-    
-  #   environment:
-  #     name: github-pages
-  #     url: ${{ steps.deployment.outputs.page_url }}
-    
-  #   concurrency:
-  #     group: "pages"
-  #     cancel-in-progress: false
-    
-  #   steps:
-  #     - name: Deploy to GitHub Pages
-  #       id: deployment
-  #       uses: actions/deploy-pages@v3
-
-  #     - name: Save Report URL
-  #       if: always()
-  #       run: |
-  #         {
-  #           echo "# 📊 Playwright Test Results"
-  #           echo ""
-  #           echo "### 🌐 Environment Information"
-  #           echo "- Tested URL: \`${{ github.event.client_payload.preview_url }}\`"
-  #           echo "- Branch: \`${{ github.event.client_payload.ref }}\`"
-  #           echo "- Commit: \`${{ github.event.client_payload.sha }}\`"
-  #           echo ""
-  #           echo "### 🔍 Test Reports"
-  #           echo "📝 [View Report](${{ steps.deployment.outputs.page_url }})"
-  #         } >> $GITHUB_STEP_SUMMARY
-
-  # cleanup-old-reports:
-  #   needs: deploy
-  #   runs-on: ubuntu-latest
-  #   if: always()
-  #   steps:
-  #     - name: Checkout gh-pages
-  #       uses: actions/checkout@v4
-  #       with:
-  #         ref: gh-pages
-          
-  #     - name: Delete old reports
-  #       run: |
-  #         if [ -d "reports" ]; then
-  #           cd reports
-  #           for dir in */; do
-  #             if [ -d "$dir" ]; then
-  #               created_time=$(git log -1 --format=%ct "$dir" 2>/dev/null || echo $(date +%s))
-  #               current_time=$(date +%s)
-  #               age_hours=$(( (current_time - created_time) / 3600 ))
-                
-  #               if [ $age_hours -gt 12 ]; then
-  #                 echo "Deleting old report: $dir"
-  #                 rm -rf "$dir"
-  #               fi
-  #             fi
-  #           done
-  #         else
-  #           echo "Reports directory not found, skipping cleanup"
-  #         fi
+      - name: Deploy report to GitHub Pages
+        if: always()
+        uses: actions/deploy-pages@v4
+        with:
+          artifact_name: github-pages
