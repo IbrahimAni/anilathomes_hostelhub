@@ -71,7 +71,7 @@ const FeaturedHostels = () => {
                                     <button 
                                         data-testid={`view-details-button-${hostel.name}`}
                                         onClick={(e) => onViewDetailsClick(e, hostel.id)}
-                                        className="px-4 py-2 text-sm text-primary hover:bg-primary hover:text-white border border-primary rounded transition-colors"
+                                        className="px-4 py-2 text-sm bg-primary text-white hover:bg-primary/90 rounded transition-colors"
                                     >
                                         View Details
                                     </button>
