@@ -60,11 +60,11 @@ jobs:
           echo "Checking artifact contents..."
           find playwright-report/ -type f
 
-      - name: Deploy to GitHub Pages
-        id: deployment
-        uses: actions/deploy-pages@v4
-        with:
-          artifact_name: github-pages
+      # - name: Deploy to GitHub Pages
+      #   id: deployment
+      #   uses: actions/deploy-pages@v4
+      #   with:
+      #     artifact_name: github-pages
           
   #     - name: Setup Pages
   #       if: always()

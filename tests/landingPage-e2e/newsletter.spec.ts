@@ -1,8 +1,10 @@
 import { test, expect } from '@playwright/test';
+import { closeWelcomeDiscountModal } from '../../tests-utils/helpers/closeWelcomeModal';
 
 test.describe('Newsletter Form Validation', () => {
   test.beforeEach(async ({ page }) => {
     await page.goto('/');
+    await closeWelcomeDiscountModal(page);
   });
 
 //   test('should display validation error for invalid email format', async ({ page }) => {

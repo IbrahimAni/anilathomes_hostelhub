@@ -1,8 +1,10 @@
 import { test, expect } from '@playwright/test';
+import { closeWelcomeDiscountModal } from '../../tests-utils/helpers/closeWelcomeModal';
 
 test.describe('Search Form Validation', () => {
   test.beforeEach(async ({ page }) => {
     await page.goto('/');
+    await closeWelcomeDiscountModal(page);
   });
 
   test('shows location error when empty', async ({ page }) => {

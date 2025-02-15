@@ -6,24 +6,24 @@ import Image from 'next/image';
 const featuredHostels = [
     {
         id: 1,
-        name: "Student Haven",
+        name: "Scholar's Loft",
         location: "KWASU Malete",
         price: "150,000",
         image: "/assets/hostel1.svg",
     },
     {
         id: 2,
-        name: "Campus Lodge",
+        name: "Campus Oasis",
         location: "Tanke Ilorin",
         price: "180,000",
-        image: "/assets/hostel1.svg",
+        image: "/assets/hostel2.svg",
     },
     {
         id: 3,
-        name: "Unity Hall",
+        name: "Academic Retreat",
         location: "KWASU Malete",
         price: "200,000",
-        image: "/assets/hostel1.svg",
+        image: "/assets/hostel3.svg",
     }
 ] as const;
 
@@ -52,23 +52,26 @@ const FeaturedHostels = () => {
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
                     {featuredHostels.map((hostel) => (
                         <div key={hostel.id} className="bg-white rounded-lg shadow-md overflow-hidden transition-transform hover:scale-[1.02]">
-                            <div className="relative h-48 bg-gray-200">
+                            <div className="relative h-64 w-full">
                                 <Image 
                                     src={hostel.image} 
+                                    data-testid={`hostel-image-${hostel.name}`}
                                     alt={hostel.name} 
                                     fill
-                                    className="object-cover"
-                                    priority={hostel.id === 1}
+                                    className="object-cover w-full h-full"
+                                    sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+                                    priority={hostel.name === "Scholar's Loft"}
                                 />
                             </div>
                             <div className="p-4">
-                                <h3 className="text-xl font-semibold text-gray-900">{hostel.name}</h3>
-                                <p className="text-gray-600">{hostel.location}</p>
+                                <h3 data-testid="hostel-name" className="text-xl font-semibold text-gray-900">{hostel.name}</h3>
+                                <p data-testid="hostel-location" className="text-gray-600">{hostel.location}</p>
                                 <div className="mt-4 flex justify-between items-center">
-                                    <span className="text-[#6c63ff] font-bold">₦{hostel.price}/year</span>
+                                    <span data-testid="hostel-price" className="text-primary font-bold">₦{hostel.price}/year</span>
                                     <button 
+                                        data-testid={`view-details-button-${hostel.name}`}
                                         onClick={(e) => onViewDetailsClick(e, hostel.id)}
-                                        className="px-4 py-2 text-sm text-[#6c63ff] hover:bg-[#6c63ff] hover:text-white border border-[#6c63ff] rounded transition-colors"
+                                        className="px-4 py-2 text-sm bg-primary text-white hover:bg-primary/90 rounded transition-colors"
                                     >
                                         View Details
                                     </button>

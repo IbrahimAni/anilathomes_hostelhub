@@ -67,7 +67,7 @@ const SearchForm = () => {
           <button
             data-testid="search-button"
             type="submit"
-            className="h-[42px] px-4 bg-[#6c63ff] hover:bg-[#5b54ff] text-white font-medium rounded-md transition-colors duration-200"
+            className="h-[42px] px-4 bg-primary hover:bg-[#5b54ff] text-white font-medium rounded-md transition-colors duration-200"
           >
             Search Hostels
           </button>
