@@ -17,7 +17,7 @@ jobs:
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
-    if: github.event.deployment_status.state == 'success'
+    if: github.event.deployment_status.state == 'success' && contains(github.event.deployment_status.environment, 'Preview')
     runs-on: ubuntu-latest
     
     steps:
@@ -38,12 +38,17 @@ jobs:
       - name: Build Next.js app
         run: npm run build
         
-      - name: Start server and run tests
+      - name: Run tests
         env:
+          BASE_URL: ${{ github.event.deployment_status.target_url }}
           PORT: 3000
-          BASE_URL: http://localhost:3000
+          PLAYWRIGHT_TEST_BASE_URL: ${{ github.event.deployment_status.target_url }}
+          VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+          VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
+          TOKEN: ${{ secrets.VERCEL_TOKEN }}
         run: |
-          npm run test:e2e:dev
+          echo "Running tests against preview URL: $BASE_URL"
+          npm run test:e2e
 
       - name: Upload test results
         uses: actions/upload-pages-artifact@v3

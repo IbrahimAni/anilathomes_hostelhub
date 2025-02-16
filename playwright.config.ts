@@ -12,7 +12,7 @@ export default defineConfig({
   use: {
     browserName: "chromium",
     headless: true,
-    baseURL: "http://localhost:3000",
+    baseURL: process.env.BASE_URL,
     trace: "on-first-retry",
     video: "on-first-retry",
     screenshot: "only-on-failure",
