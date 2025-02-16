@@ -21,7 +21,13 @@ jobs:
     runs-on: ubuntu-latest
     outputs:
       preview_url: ${{ steps.get_preview_url.outputs.preview_url }}
-      echo "Preview URL: ${{ steps.get_preview_url.outputs.preview_url }}"
+    steps:
+      - name: Get Preview URL
+        id: get_preview_url
+        run: |
+          echo "preview_url=${{ github.event.deployment_status.target_url }}" >> $GITHUB_OUTPUT
+      - name: Print Preview URL
+        run: echo "Preview URL: ${{ steps.get_preview_url.outputs.preview_url }}"
 
   e2e-tests:
     needs: deploy-preview
@@ -43,7 +49,7 @@ jobs:
 
       - name: Run Playwright tests
         env:
-          BASE_URL: ${{ needs.wait-for-vercel.outputs.preview_url }}
+          BASE_URL: ${{ needs.deploy-preview.outputs.preview_url }}
         run: npx playwright test
 
       - name: Upload test results
