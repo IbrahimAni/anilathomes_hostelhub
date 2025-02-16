@@ -49,32 +49,3 @@ jobs:
           name: playwright-report
           path: playwright-report/
           retention-days: 1
-
-  deploy-test-report:
-    if: always()
-    needs: e2e-tests
-    runs-on: ubuntu-latest
-    environment:
-      name: github-pages
-      url: ${{ steps.deployment.outputs.page_url }}test-report-${{ github.run_id }}
-    steps:
-      - name: Download artifact
-        uses: actions/download-artifact@v4
-        with:
-          name: playwright-report
-          path: playwright-report
-
-      - name: Setup Pages
-        uses: actions/configure-pages@v4
-
-      - name: Upload artifact
-        uses: actions/upload-pages-artifact@v3
-        with:
-          name: test-report-${{ github.run_id }}
-          path: playwright-report
-
-      - name: Deploy to GitHub Pages
-        id: deployment
-        uses: actions/deploy-pages@v4
-        with:
-          artifact_name: test-report-${{ github.run_id }}
