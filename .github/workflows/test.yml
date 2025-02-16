@@ -1,5 +1,8 @@
 name: e2e-tests
-
+env: 
+  VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+  VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
+  VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
 on:
   deployment_status
 
@@ -41,11 +44,6 @@ jobs:
       - name: Run tests
         env:
           BASE_URL: ${{ github.event.deployment_status.target_url }}
-          PORT: 3000
-          PLAYWRIGHT_TEST_BASE_URL: ${{ github.event.deployment_status.target_url }}
-          VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
-          VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
-          TOKEN: ${{ secrets.VERCEL_TOKEN }}
         run: |
           echo "Running tests against preview URL: $BASE_URL"
           npm run test:e2e
@@ -57,8 +55,8 @@ jobs:
           path: playwright-report/
           retention-days: 1
 
-      - name: Deploy report to GitHub Pages
-        if: always()
-        uses: actions/deploy-pages@v4
-        with:
-          artifact_name: github-pages
+      # - name: Deploy report to GitHub Pages
+      #   if: always()
+      #   uses: actions/deploy-pages@v4
+      #   with:
+      #     artifact_name: github-pages
