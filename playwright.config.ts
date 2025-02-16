@@ -3,7 +3,12 @@ import { defineConfig } from "@playwright/test";
 export default defineConfig({
   testDir: "tests",
   reporter: [["html"], ["list"]],
-
+  webServer: {
+    command: 'npm run dev',
+    url: 'http://localhost:3000',
+    reuseExistingServer: !process.env.CI,
+    timeout: 120000
+  },
   use: {
     browserName: "chromium",
     headless: true,
