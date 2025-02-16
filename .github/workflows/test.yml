@@ -16,19 +16,8 @@ concurrency:
   cancel-in-progress: false
 
 jobs:
-  deploy-preview:
-    if: github.event.deployment_status.state == 'success' && contains(github.event.deployment_status.environment, 'Preview')
-    runs-on: ubuntu-latest
-    outputs:
-      preview_url: ${{ steps.get_preview_url.outputs.preview_url }}
-    steps:
-      - name: Get Preview URL
-        id: get_preview_url
-        run: |
-          echo "preview_url=${{ github.event.deployment_status.target_url }}" >> "$GITHUB_OUTPUT"
-
   e2e-tests:
-    needs: deploy-preview
+    if: github.event.deployment_status.state == 'success' && contains(github.event.deployment_status.environment, 'Preview')
     runs-on: ubuntu-latest
     env:
       VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
@@ -49,7 +38,7 @@ jobs:
 
       - name: Run Playwright tests
         env:
-          BASE_URL: ${{ needs.deploy-preview.outputs.preview_url }}?token=${{ secrets.VERCEL_TOKEN }}
+          BASE_URL: ${{ github.event.deployment_status.target_url }}
         run: npx playwright test
 
       - name: Upload test results
