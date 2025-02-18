@@ -44,17 +44,17 @@ export default function Newsletter() {
   };
 
   return (
-    <section className="py-16 bg-primary relative z-10">
+    <section className="py-16 bg-primary relative z-10" data-testid="newsletter-section">
       <div className="container mx-auto px-4 max-w-6xl">
         <div className="max-w-3xl mx-auto text-center">
           <h2 className="text-3xl md:text-4xl font-bold text-white mb-4" data-testid="newsletter-title">
             Get Exclusive Deals
           </h2>
-          <p className="text-white/90 mb-8">
+          <p className="text-white/90 mb-8" data-testid="newsletter-description">
             Subscribe to our newsletter and never miss out on special offers and updates
           </p>
           
-          <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col sm:flex-row gap-4 justify-center items-start w-full">
+          <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col sm:flex-row gap-4 justify-center items-start w-full" data-testid="newsletter-form">
             <div className="w-full sm:w-auto sm:flex-1 max-w-md h-[74px]">
               <div className="relative">
                 <input
