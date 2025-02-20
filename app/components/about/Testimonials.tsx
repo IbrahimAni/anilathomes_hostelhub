@@ -63,6 +63,7 @@ export default function Testimonials() {
     };
 
     useEffect(() => {
+        // eslint-disable-next-line react-hooks/exhaustive-deps
         let resizeTimer: NodeJS.Timeout;
         let transitionFrame: number;
 
@@ -177,7 +178,9 @@ export default function Testimonials() {
                                                 </p>
                                             </div>
                                         </div>
-                                        <p className="text-gray-700 text-sm leading-relaxed">"{testimonial.quote}"</p>
+                                        <p className="text-gray-700 text-sm leading-relaxed">
+                                            &quot;{testimonial.quote}&quot;
+                                        </p>
                                     </div>
                                 </div>
                             ))}
@@ -194,7 +197,9 @@ export default function Testimonials() {
                                             </p>
                                         </div>
                                     </div>
-                                    <p className="text-gray-700">"{testimonials[0].quote}"</p>
+                                    <p className="text-gray-700">
+                                        &quot;{testimonials[0].quote}&quot;
+                                    </p>
                                 </div>
                             </div>
                         </div>
