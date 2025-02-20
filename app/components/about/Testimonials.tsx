@@ -63,6 +63,9 @@ export default function Testimonials() {
     };
 
     useEffect(() => {
+        let resizeTimer: NodeJS.Timeout;
+        let transitionFrame: number;
+
         const handleResize = () => {
             setTransitioning(false);
             const width = window.innerWidth;
@@ -70,27 +73,26 @@ export default function Testimonials() {
             const slidesPerView = width >= 1024 ? 3 : width >= 768 ? 2 : 1;
             setSlideWidth(100 / slidesPerView);
             setContainerWidth((testimonials.length + 2) * (100 / slidesPerView));
-            
-            requestAnimationFrame(() => {
+
+            transitionFrame = requestAnimationFrame(() => {
                 setTransitioning(true);
             });
         };
 
         handleResize();
         startAutoSlide();
-        
-        // Debounce resize event
-        let resizeTimer: NodeJS.Timeout;
+
         const debouncedResize = () => {
             clearTimeout(resizeTimer);
             resizeTimer = setTimeout(handleResize, 100);
         };
 
-        window.addEventListener('resize', debouncedResize);
-        
+        window.addEventListener("resize", debouncedResize);
+
         return () => {
-            window.removeEventListener('resize', debouncedResize);
+            window.removeEventListener("resize", debouncedResize);
             clearTimeout(resizeTimer);
+            cancelAnimationFrame(transitionFrame);
             stopAutoSlide();
         };
     }, []);
@@ -157,7 +159,7 @@ export default function Testimonials() {
                                         </div>
                                     </div>
                                     <p className="text-gray-700">
-                                        "{testimonials[testimonials.length - 1].quote}"
+                                        &quot;{testimonials[testimonials.length - 1].quote}&quot;
                                     </p>
                                 </div>
                             </div>
