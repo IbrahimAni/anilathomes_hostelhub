@@ -2,12 +2,15 @@
   "name": "anilathomes_hostelhub",
   "version": "0.1.0",
   "private": true,
+  "type": "module",
   "scripts": {
     "dev": "next dev --turbopack",
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
-    "test:e2e": "playwright test"
+    "test:e2e": "playwright test",
+    "test:e2e:dev": "start-server-and-test dev http://localhost:3000 test:e2e",
+    "test:e2e:ci": "cross-env CI=true npm run build && start-server-and-test start http://localhost:3000 test:e2e"
   },
   "dependencies": {
     "firebase": "^11.2.0",
@@ -28,7 +31,9 @@
     "eslint-config-next": "15.1.6",
     "playwright": "^1.50.1",
     "postcss": "^8",
+    "start-server-and-test": "^2.0.10",
     "tailwindcss": "^3.4.1",
-    "typescript": "^5"
+    "typescript": "^5",
+    "cross-env": "^7.0.3"
   }
 }
