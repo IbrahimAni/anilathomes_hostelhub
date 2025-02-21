@@ -1,12 +1,12 @@
 'use client';
 
 import React, { useEffect, useState } from "react";
-import Header from "./components/Header";
-import Hero from "./components/Hero";
-import FeaturedHostels from "./components/FeaturedHostels";
-import WhyChooseUs from "./components/WhyChooseUs";
-import Newsletter from "./components/Newsletter";
-import DiscountModal from "./components/DiscountModal";
+import Header from "../components/landing/Header";
+import Hero from "../components/landing/Hero";
+import FeaturedHostels from "../components/landing/FeaturedHostels";
+import WhyChooseUs from "../components/landing/WhyChooseUs";
+import Newsletter from "../components/landing/Newsletter";
+import DiscountModal from "../components/landing/DiscountModal";
 
 const LandingPage = () => {
   const [showModal, setShowModal] = useState(false);
