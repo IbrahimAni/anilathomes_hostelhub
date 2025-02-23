@@ -7,6 +7,7 @@ import FeaturedHostels from "../components/landing/FeaturedHostels";
 import WhyChooseUs from "../components/landing/WhyChooseUs";
 import Newsletter from "../components/landing/Newsletter";
 import DiscountModal from "../components/landing/DiscountModal";
+import Footer from "@/components/landing/Footer";
 
 const LandingPage = () => {
   const [showModal, setShowModal] = useState(false);
@@ -20,17 +21,20 @@ const LandingPage = () => {
   }, []);
 
   return (
-    <div className="min-h-screen">
+    <>
       <Header />
-      <Hero />
-      <FeaturedHostels />
-      <WhyChooseUs />
-      <Newsletter />
-      <DiscountModal 
-        isOpen={showModal} 
-        onClose={() => setShowModal(false)} 
-      />
-    </div>
+      <div className="min-h-screen">
+        <Hero />
+        <FeaturedHostels />
+        <WhyChooseUs />
+        <Newsletter />
+        <DiscountModal 
+          isOpen={showModal} 
+          onClose={() => setShowModal(false)} 
+        />
+      </div>
+      <Footer />
+    </>
   );
 };
 

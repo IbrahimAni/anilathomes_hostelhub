@@ -1,9 +1,7 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
-import Footer from "../components/landing/Footer";
 import { Toaster } from 'react-hot-toast';
-import Header from "../components/landing/Header";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -35,11 +33,7 @@ export default function RootLayout({
         suppressHydrationWarning
         className={`${geistSans.variable} ${geistMono.variable} antialiased min-h-screen flex flex-col`}
       >
-        <Header />
-        <main className="flex-grow">
-          {children}
-        </main>
-        <Footer />
+        {children}
         <Toaster position="top-center" />
       </body>
     </html>
