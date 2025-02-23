@@ -2,6 +2,7 @@ import { defineConfig } from "@playwright/test";
 
 export default defineConfig({
   testDir: "tests",
+  workers: process.env.CI ? undefined : 1,
   reporter: [["html"], ["list"]],
   webServer: {
     command: 'npm run dev',
