@@ -19,7 +19,7 @@ test.describe("Signup test suite", () => {
   });
 
   test("Navigate to sign in page", async ({ page }) => {
-    await page.getByTestId("login-link").click();
+    await page.getByTestId("signin-link").click();
     await expect(
       page.getByRole("heading", { name: "Sign in to your account" })
     ).toBeVisible();
