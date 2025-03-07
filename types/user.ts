@@ -1,0 +1,23 @@
+import { User as FirebaseUser } from "firebase/auth";
+
+export type UserRole = "student" | "agent" | "business";
+
+export interface UserProfile {
+  uid: string;
+  email: string | null;
+  displayName: string | null;
+  role: UserRole | null;
+  photoURL: string | null;
+  phoneNumber: string | null;
+  emailVerified: boolean;
+  createdAt: string;
+  lastLoginAt: string;
+}
+
+// Extended user interface for app usage
+export interface User extends Omit<FirebaseUser, "providerData"> {
+  role: UserRole | null;
+  profileComplete: boolean;
+}
+
+export const DEFAULT_USER_ROLE: UserRole = "student";
