@@ -5,7 +5,6 @@ import { useRouter, usePathname } from "next/navigation";
 import { auth } from "@/config/firebase";
 import { onAuthStateChanged } from "firebase/auth";
 import { UserService } from "@/services/user.service";
-import { UserRole } from "@/types/user";
 
 export default function DashboardLayout({
   children,
