@@ -5,6 +5,7 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { loginSchema, LoginFormData, AuthError } from "@/types/auth";
 import { AuthService } from "@/services/auth.service";
+import { UserService } from "@/services/user.service";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 
@@ -26,11 +27,35 @@ export default function LoginForm() {
     setShowPassword(!showPassword);
   };
 
+  const navigateToUserDashboard = async (userId: string) => {
+    try {
+      // Get user profile from Firestore to determine the role
+      const userProfile = await UserService.getUserProfile(userId);
+      
+      if (userProfile && userProfile.role) {
+        // Navigate to the appropriate dashboard based on the user's role
+        router.push(`/dashboard/${userProfile.role}`);
+      } else {
+        // If no role is set, redirect to the role selection page
+        router.push("/select-role");
+      }
+    } catch (err) {
+      console.error("Error fetching user role:", err);
+      // Show error message to the user
+      setError("Failed to load your profile. Please try again or contact support.");
+      // User is authenticated but we couldn't determine their role, redirect to role selection
+      router.push("/select-role");
+    }
+  };
+
   const onSubmit = async (data: LoginFormData) => {
     setIsEmailLoading(true);
+    setError("");
     try {
-      await AuthService.loginWithEmailAndPassword(data);
-      router.push("/dashboard/student");
+      const userCredential = await AuthService.loginWithEmailAndPassword(data);
+      if (userCredential && userCredential.user) {
+        await navigateToUserDashboard(userCredential.user.uid);
+      }
     } catch (err) {
       const error = err as AuthError;
       setError(error.message);
@@ -42,9 +67,12 @@ export default function LoginForm() {
   const handleGoogleSignIn = async (e: React.MouseEvent<HTMLButtonElement>) => {
     e.preventDefault();
     setIsGoogleLoading(true);
+    setError("");
     try {
-      await AuthService.loginWithGoogle();
-      router.push("/dashboard/student");
+      const userCredential = await AuthService.loginWithGoogle();
+      if (userCredential && userCredential.user) {
+        await navigateToUserDashboard(userCredential.user.uid);
+      }
     } catch (err) {
       const error = err as AuthError;
       setError(error.message);

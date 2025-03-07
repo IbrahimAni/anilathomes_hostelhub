@@ -10,15 +10,15 @@ import {
 } from "firebase/auth";
 
 export class AuthService {
-  static async loginWithEmailAndPassword(data: LoginFormData): Promise<void> {
+  static async loginWithEmailAndPassword(data: LoginFormData): Promise<UserCredential> {
     try {
-      await signInWithEmailAndPassword(auth, data.email, data.password);
+      return await signInWithEmailAndPassword(auth, data.email, data.password);
     } catch (error) {
       throw this.handleAuthError(error);
     }
   }
 
-  static async loginWithGoogle(): Promise<void> {
+  static async loginWithGoogle(): Promise<UserCredential> {
     try {
       const result = await signInWithPopup(auth, googleProvider);
       
@@ -26,12 +26,14 @@ export class AuthService {
       if (result.user) {
         await this.saveUserToFirestore(result);
       }
+
+      return result;
     } catch (error) {
       throw this.handleAuthError(error);
     }
   }
 
-  static async signUpWithEmailAndPassword(data: SignUpFormData): Promise<void> {
+  static async signUpWithEmailAndPassword(data: SignUpFormData): Promise<UserCredential> {
     try {
       const result = await createUserWithEmailAndPassword(auth, data.email, data.password);
       
@@ -39,6 +41,8 @@ export class AuthService {
       if (result.user) {
         await this.saveUserToFirestore(result);
       }
+
+      return result;
     } catch (error) {
       throw this.handleAuthError(error);
     }
