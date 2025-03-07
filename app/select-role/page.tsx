@@ -111,10 +111,7 @@ const SelectUserRole = () => {
           Select your role
         </h2>
         <p className="mt-2 text-center text-sm text-gray-600">
-          Choose how you'll use HostelHub
-        </p>
-        <p className="mt-1 text-center text-xs text-red-600 font-semibold">
-          You cannot change your role after selection
+          Choose how you&apos;ll use HostelHub
         </p>
       </div>
 
