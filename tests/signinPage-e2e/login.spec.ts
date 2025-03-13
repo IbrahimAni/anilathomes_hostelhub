@@ -51,5 +51,5 @@ test.describe("Login suite", () => {
 
   test.skip("Login as a business and try to access student dashboard", async ({ page }) => {});
 
-  test.skip("Login as a business and try to access agent dashboard", async ({ page }) => {});#
+  test.skip("Login as a business and try to access agent dashboard", async ({ page }) => {});
 });
