@@ -1,7 +1,8 @@
-import { invalidData } from "@hookform/resolvers/ajv/src/__tests__/__fixtures__/data.js";
 import { test, expect } from "@playwright/test";
+import { testData as LoginData } from "@/tests-utils/data/testData";
 
 test.describe("Login suite", () => {
+  const {studentEmail, agentEmail, businessEmail} = LoginData;
   const testData = {
     invalidEmail: "invalidEmail@invalidEmail",
     invalidPassword: "invalidPassword",
@@ -33,4 +34,22 @@ test.describe("Login suite", () => {
     await expect(page.getByTestId("email-error")).toBeVisible();
     await expect(page.getByTestId("email-error")).toHaveText("Invalid email address");
   });
+
+  test.skip("login as a student", async ({ page }) => {});
+
+  test.skip("login as an agent", async ({ page }) => {});
+
+  test.skip("login as a business", async ({ page }) => {});
+
+  test.skip("Login as a student and try to access agent dashboard", async ({ page }) => {});
+
+  test.skip("Login as a student and try to access business dashboard", async ({ page }) => {});
+
+  test.skip("Login as an agent and try to access student dashboard", async ({ page }) => {});
+
+  test.skip("Login as an agent and try to access business dashboard", async ({ page }) => {});
+
+  test.skip("Login as a business and try to access student dashboard", async ({ page }) => {});
+
+  test.skip("Login as a business and try to access agent dashboard", async ({ page }) => {});#
 });

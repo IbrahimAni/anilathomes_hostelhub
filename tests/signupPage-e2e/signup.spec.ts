@@ -8,8 +8,11 @@ test.describe("Signup test suite", () => {
     pwdWithoutUppercase: "12345678",
     pwdWithoutLowercase: "ABCDEFGH",
     validEmail: "test@domain.com",
-    validPassword: "Password123",
-    confirmPassword: "Password123",
+    studentEmail: "student@anilathomes.com",
+    agentEmail: "agent@anilathomes.com",
+    businessEmail: "business@anilathomes.com",
+    validPassword: "Password.123$",
+    confirmPassword: "Password.123$",
     unmatchedConfirmPassword: "Password1234",
   };
 
@@ -17,6 +20,20 @@ test.describe("Signup test suite", () => {
     await page.goto("/signup");
     await expect(page).toHaveURL(/.*signup/);
   });
+
+  test.skip("Signup with valid credentials as a student", async ({
+    page,
+  }) => {});
+
+  test.skip("Signup with valid credentials as an agent", async ({
+    page,
+  }) => {});
+
+  test.skip("Signup with valid credentials as a business", async ({
+    page,
+  }) => {});
+
+  test.skip("Can't signup with existing email", async ({ page }) => {});
 
   test("Navigate to sign in page", async ({ page }) => {
     await page.getByTestId("signin-link").click();
@@ -73,11 +90,13 @@ test.describe("Signup test suite", () => {
   test("Signup with unmatched confirm password", async ({ page }) => {
     await page.getByTestId("email-input").fill(testData.validEmail);
     await page.getByTestId("password-input").fill(testData.validPassword);
-    await page.getByTestId("confirm-password-input").fill(testData.unmatchedConfirmPassword);
+    await page
+      .getByTestId("confirm-password-input")
+      .fill(testData.unmatchedConfirmPassword);
     await page.getByTestId("submit-button").click();
     await expect(page.getByTestId("confirm-password-error")).toBeVisible();
     await expect(page.getByTestId("confirm-password-error")).toHaveText(
       "Passwords don't match"
     );
-  })
+  });
 });
