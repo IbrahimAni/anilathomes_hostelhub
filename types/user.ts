@@ -12,6 +12,10 @@ export interface UserProfile {
   emailVerified: boolean;
   createdAt: string;
   lastLoginAt: string;
+  // Added student-specific fields
+  university?: string;
+  department?: string;
+  level?: string;
 }
 
 // Extended user interface for app usage
