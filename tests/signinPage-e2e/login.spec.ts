@@ -2,12 +2,11 @@ import { test, expect } from "@playwright/test";
 import { testData as LoginData } from "@/tests-utils/data/testData";
 
 test.describe("Login suite", () => {
-  const {studentEmail, agentEmail, businessEmail} = LoginData;
+  const {studentEmail, agentEmail, businessEmail, validPassword} = LoginData;
   const testData = {
     invalidEmail: "invalidEmail@invalidEmail",
     invalidPassword: "invalidPassword",
     validEmail: "test@test.com",
-    validPassword: "",
   };
 
   test.beforeEach(async ({ page }) => {
@@ -35,21 +34,96 @@ test.describe("Login suite", () => {
     await expect(page.getByTestId("email-error")).toHaveText("Invalid email address");
   });
 
-  test.skip("login as a student", async ({ page }) => {});
+  test("login as a student", async ({ page }) => {
+    await page.getByTestId("email-input").fill(studentEmail);
+    await page.getByTestId("password-input").fill(validPassword);
+    await page.getByTestId("submit-button").click();
+    await expect(page).toHaveURL(/.*student/);
+  });
 
-  test.skip("login as an agent", async ({ page }) => {});
+  test("login as an agent", async ({ page }) => {
+    await page.getByTestId("email-input").fill(agentEmail);
+    await page.getByTestId("password-input").fill(validPassword);
+    await page.getByTestId("submit-button").click();
+    await expect(page).toHaveURL(/.*agent/);
+  });
 
-  test.skip("login as a business", async ({ page }) => {});
+  test("login as a business", async ({ page }) => {
+    await page.getByTestId("email-input").fill(businessEmail);
+    await page.getByTestId("password-input").fill(validPassword);
+    await page.getByTestId("submit-button").click();
+    await expect(page).toHaveURL(/.*business/);
+  });
 
-  test.skip("Login as a student and try to access agent dashboard", async ({ page }) => {});
+  test("Unable to login as a student and try to access agent dashboard", async ({ page }) => {
+    await page.getByTestId("email-input").fill(studentEmail);
+    await page.getByTestId("password-input").fill(validPassword);
+    await page.getByTestId("submit-button").click();
+    await expect(page).toHaveURL(/.*student/);
+    
+    // Try to navigate to agent dashboard directly
+    await page.goto("/dashboard/agent");
+    // Verify we are redirected back to student dashboard
+    await expect(page).toHaveURL(/.*student/);
+  });
 
-  test.skip("Login as a student and try to access business dashboard", async ({ page }) => {});
+  test("Unable to login as a student and try to access business dashboard", async ({ page }) => {
+    await page.getByTestId("email-input").fill(studentEmail);
+    await page.getByTestId("password-input").fill(validPassword);
+    await page.getByTestId("submit-button").click();
+    await expect(page).toHaveURL(/.*student/);
+    
+    // Try to navigate to business dashboard directly
+    await page.goto("/dashboard/business");
+    // Verify we are redirected back to student dashboard
+    await expect(page).toHaveURL(/.*student/);
+  });
 
-  test.skip("Login as an agent and try to access student dashboard", async ({ page }) => {});
+  test("Unable to login as an agent and try to access student dashboard", async ({ page }) => {
+    await page.getByTestId("email-input").fill(agentEmail);
+    await page.getByTestId("password-input").fill(validPassword);
+    await page.getByTestId("submit-button").click();
+    await expect(page).toHaveURL(/.*agent/);
+    
+    // Try to navigate to student dashboard directly
+    await page.goto("/dashboard/student");
+    // Verify we are redirected back to agent dashboard
+    await expect(page).toHaveURL(/.*agent/);
+  });
 
-  test.skip("Login as an agent and try to access business dashboard", async ({ page }) => {});
+  test("Unable to login as an agent and try to access business dashboard", async ({ page }) => {
+    await page.getByTestId("email-input").fill(agentEmail);
+    await page.getByTestId("password-input").fill(validPassword);
+    await page.getByTestId("submit-button").click();
+    await expect(page).toHaveURL(/.*agent/);
+    
+    // Try to navigate to business dashboard directly
+    await page.goto("/dashboard/business");
+    // Verify we are redirected back to agent dashboard
+    await expect(page).toHaveURL(/.*agent/);
+  });
 
-  test.skip("Login as a business and try to access student dashboard", async ({ page }) => {});
+  test("Unable to login as a business and try to access student dashboard", async ({ page }) => {
+    await page.getByTestId("email-input").fill(businessEmail);
+    await page.getByTestId("password-input").fill(validPassword);
+    await page.getByTestId("submit-button").click();
+    await expect(page).toHaveURL(/.*business/);
+    
+    // Try to navigate to student dashboard directly
+    await page.goto("/dashboard/student");
+    // Verify we are redirected back to business dashboard
+    await expect(page).toHaveURL(/.*business/);
+  });
 
-  test.skip("Login as a business and try to access agent dashboard", async ({ page }) => {});
+  test("Unable to login as a business and try to access agent dashboard", async ({ page }) => {
+    await page.getByTestId("email-input").fill(businessEmail);
+    await page.getByTestId("password-input").fill(validPassword);
+    await page.getByTestId("submit-button").click();
+    await expect(page).toHaveURL(/.*business/);
+    
+    // Try to navigate to agent dashboard directly
+    await page.goto("/dashboard/agent");
+    // Verify we are redirected back to business dashboard
+    await expect(page).toHaveURL(/.*business/);
+  });
 });

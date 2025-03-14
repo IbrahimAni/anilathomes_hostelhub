@@ -1,39 +1,66 @@
 import { test, expect } from "@playwright/test";
+import { testData as SignUpData } from "@/tests-utils/data/testData";
+import { genRandomNumber } from "@/tests-utils/helpers/genRandomNumber";
 
 test.describe("Signup test suite", () => {
-  const testData = {
-    invalidEmail: "invalidEmail@invalidEmail",
-    invalidPassword: "invalidPassword",
-    pwdLessThen8: "1234567",
-    pwdWithoutUppercase: "12345678",
-    pwdWithoutLowercase: "ABCDEFGH",
-    validEmail: "test@domain.com",
-    studentEmail: "student@anilathomes.com",
-    agentEmail: "agent@anilathomes.com",
-    businessEmail: "business@anilathomes.com",
-    validPassword: "Password.123$",
-    confirmPassword: "Password.123$",
-    unmatchedConfirmPassword: "Password1234",
-  };
+  const {
+    invalidEmail,
+    validEmail,
+    pwdLessThen8,
+    pwdWithoutUppercase,
+    pwdWithoutLowercase,
+    validPassword,
+    unmatchedConfirmPassword,
+    studentEmail,
+    agentEmail,
+    businessEmail
+  } = SignUpData;
 
   test.beforeEach(async ({ page }) => {
     await page.goto("/signup");
     await expect(page).toHaveURL(/.*signup/);
   });
 
-  test.skip("Signup with valid credentials as a student", async ({
-    page,
-  }) => {});
+  test("Signup with valid credentials as a student", async ({ page }) => {
+    const randomEmail = studentEmail.replace('@', `${genRandomNumber()}@`);
+    await page.getByTestId("email-input").fill(randomEmail);
+    await page.getByTestId("password-input").fill(validPassword);
+    await page.getByTestId("confirm-password-input").fill(validPassword);
+    await page.getByTestId("submit-button").click();
+    await page.getByTestId("role-student").click();
+    await expect(page).toHaveURL(/.*student/);
+    await expect(page.getByRole('heading', { name: 'Welcome to HostelHub!' })).toBeVisible();
+  });
 
-  test.skip("Signup with valid credentials as an agent", async ({
-    page,
-  }) => {});
+  test("Signup with valid credentials as an agent", async ({ page }) => {
+    const randomEmail = agentEmail.replace('@', `${genRandomNumber()}@`);
+    await page.getByTestId("email-input").fill(randomEmail);
+    await page.getByTestId("password-input").fill(validPassword);
+    await page.getByTestId("confirm-password-input").fill(validPassword);
+    await page.getByTestId("submit-button").click();
+    await page.getByTestId("role-agent").click();
+    await expect(page).toHaveURL(/.*agent/);  });
 
-  test.skip("Signup with valid credentials as a business", async ({
-    page,
-  }) => {});
+  test("Signup with valid credentials as a business", async ({ page }) => {
+    const randomEmail = businessEmail.replace('@', `${genRandomNumber()}@`);
+    await page.getByTestId("email-input").fill(randomEmail);
+    await page.getByTestId("password-input").fill(validPassword);
+    await page.getByTestId("confirm-password-input").fill(validPassword);
+    await page.getByTestId("submit-button").click();
+    await page.getByTestId("role-business").click();
+    await expect(page).toHaveURL(/.*business/);  });
 
-  test.skip("Can't signup with existing email", async ({ page }) => {});
+  test("Can't signup with existing email", async ({ page }) => {    
+    // Try to register with the same email
+    await page.getByTestId("email-input").fill(studentEmail);
+    await page.getByTestId("password-input").fill(validPassword);
+    await page.getByTestId("confirm-password-input").fill(validPassword);
+    await page.getByTestId("submit-button").click();
+    
+    // Expect to see an error message
+    await expect(page.getByTestId("form-error")).toBeVisible();
+    await expect(page.getByTestId("form-error")).toContainText("email-already-in-use");
+  });
 
   test("Navigate to sign in page", async ({ page }) => {
     await page.getByTestId("signin-link").click();
@@ -49,7 +76,7 @@ test.describe("Signup test suite", () => {
   });
 
   test("Signup with invalid email credentials", async ({ page }) => {
-    await page.getByTestId("email-input").fill(testData.invalidEmail);
+    await page.getByTestId("email-input").fill(invalidEmail);
     await page.getByTestId("submit-button").click();
     await expect(page.getByTestId("email-error")).toBeVisible();
     await expect(page.getByTestId("email-error")).toHaveText(
@@ -58,8 +85,8 @@ test.describe("Signup test suite", () => {
   });
 
   test("Signup with invalid password credentials", async ({ page }) => {
-    await page.getByTestId("email-input").fill(testData.validEmail);
-    await page.getByTestId("password-input").fill(testData.pwdLessThen8);
+    await page.getByTestId("email-input").fill(validEmail);
+    await page.getByTestId("password-input").fill(pwdLessThen8);
     await page.getByTestId("submit-button").click();
     await expect(page.getByTestId("password-error")).toBeVisible();
     await expect(page.getByTestId("password-error")).toHaveText(
@@ -68,8 +95,8 @@ test.describe("Signup test suite", () => {
   });
 
   test("Signup with password without uppercase", async ({ page }) => {
-    await page.getByTestId("email-input").fill(testData.validEmail);
-    await page.getByTestId("password-input").fill(testData.pwdWithoutUppercase);
+    await page.getByTestId("email-input").fill(validEmail);
+    await page.getByTestId("password-input").fill(pwdWithoutUppercase);
     await page.getByTestId("submit-button").click();
     await expect(page.getByTestId("password-error")).toBeVisible();
     await expect(page.getByTestId("password-error")).toHaveText(
@@ -78,8 +105,8 @@ test.describe("Signup test suite", () => {
   });
 
   test("Signup with password without lowercase", async ({ page }) => {
-    await page.getByTestId("email-input").fill(testData.validEmail);
-    await page.getByTestId("password-input").fill(testData.pwdWithoutLowercase);
+    await page.getByTestId("email-input").fill(validEmail);
+    await page.getByTestId("password-input").fill(pwdWithoutLowercase);
     await page.getByTestId("submit-button").click();
     await expect(page.getByTestId("password-error")).toBeVisible();
     await expect(page.getByTestId("password-error")).toHaveText(
@@ -88,11 +115,11 @@ test.describe("Signup test suite", () => {
   });
 
   test("Signup with unmatched confirm password", async ({ page }) => {
-    await page.getByTestId("email-input").fill(testData.validEmail);
-    await page.getByTestId("password-input").fill(testData.validPassword);
+    await page.getByTestId("email-input").fill(validEmail);
+    await page.getByTestId("password-input").fill(validPassword);
     await page
       .getByTestId("confirm-password-input")
-      .fill(testData.unmatchedConfirmPassword);
+      .fill(unmatchedConfirmPassword);
     await page.getByTestId("submit-button").click();
     await expect(page.getByTestId("confirm-password-error")).toBeVisible();
     await expect(page.getByTestId("confirm-password-error")).toHaveText(
