@@ -3,7 +3,6 @@
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { auth } from "@/config/firebase";
-import { UserService } from "@/services/user.service";
 import { FiBookmark, FiTrash2, FiExternalLink } from "react-icons/fi";
 
 interface FavoriteHostel {

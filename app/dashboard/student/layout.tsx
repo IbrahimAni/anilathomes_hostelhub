@@ -12,11 +12,13 @@ import {
   FiCreditCard, 
   FiSettings,
   FiMenu,
-  FiX
+  FiX,
+  FiLogOut
 } from "react-icons/fi";
 import { auth } from "@/config/firebase";
 import { UserService } from "@/services/user.service";
 import { UserProfile } from "@/types/user";
+import { AuthService } from "@/services/auth.service";
 
 interface NavItemProps {
   href: string;
@@ -47,7 +49,6 @@ export default function StudentDashboardLayout({
   children: React.ReactNode;
 }) {
   const [user, setUser] = useState<UserProfile | null>(null);
-  const [loading, setLoading] = useState(true);
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const pathname = usePathname();
 
@@ -60,16 +61,22 @@ export default function StudentDashboardLayout({
           const userProfile = await UserService.getUserProfile(currentUser.uid);
           setUser(userProfile);
         }
-        
-        setLoading(false);
       } catch (error) {
         console.error("Error fetching user data:", error);
-        setLoading(false);
       }
     };
     
     fetchUserData();
   }, []);
+
+  const handleLogout = async () => {
+    try {
+      await AuthService.signOut();
+      window.location.href = "/login";
+    } catch (error) {
+      console.error("Error logging out:", error);
+    }
+  };
 
   return (
     <div className="flex min-h-screen bg-gray-50" data-testid="student-dashboard-layout">
@@ -195,6 +202,18 @@ export default function StudentDashboardLayout({
                 Contact Support
               </Link>
             </div>
+          </div>
+          
+          {/* Logout button */}
+          <div className="p-5 border-t">
+            <button
+              onClick={handleLogout}
+              className="flex items-center w-full p-3 rounded-lg text-red-600 hover:bg-red-50 transition-colors"
+              data-testid="logout-button"
+            >
+              <span className="mr-3"><FiLogOut size={18} /></span>
+              <span>Log Out</span>
+            </button>
           </div>
         </div>
       </aside>
