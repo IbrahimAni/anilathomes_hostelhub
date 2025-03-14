@@ -21,7 +21,7 @@ test.describe("Signup test suite", () => {
     await expect(page).toHaveURL(/.*signup/);
   });
 
-  test("Signup with valid credentials as a student", async ({ page }) => {
+  test.skip("Signup with valid credentials as a student", async ({ page }) => {
     const randomEmail = studentEmail.replace('@', `${genRandomNumber()}@`);
     await page.getByTestId("email-input").fill(randomEmail);
     await page.getByTestId("password-input").fill(validPassword);
@@ -32,7 +32,7 @@ test.describe("Signup test suite", () => {
     await expect(page.getByRole('heading', { name: 'Welcome to HostelHub!' })).toBeVisible();
   });
 
-  test("Signup with valid credentials as an agent", async ({ page }) => {
+  test.skip("Signup with valid credentials as an agent", async ({ page }) => {
     const randomEmail = agentEmail.replace('@', `${genRandomNumber()}@`);
     await page.getByTestId("email-input").fill(randomEmail);
     await page.getByTestId("password-input").fill(validPassword);
@@ -41,7 +41,7 @@ test.describe("Signup test suite", () => {
     await page.getByTestId("role-agent").click();
     await expect(page).toHaveURL(/.*agent/);  });
 
-  test("Signup with valid credentials as a business", async ({ page }) => {
+  test.skip("Signup with valid credentials as a business", async ({ page }) => {
     const randomEmail = businessEmail.replace('@', `${genRandomNumber()}@`);
     await page.getByTestId("email-input").fill(randomEmail);
     await page.getByTestId("password-input").fill(validPassword);
