@@ -2,6 +2,7 @@
 
 import { useState, useEffect, ChangeEvent } from "react";
 import { useRouter } from "next/navigation";
+import Image from "next/image"; // Added Next.js Image import
 import { auth } from "@/config/firebase";
 import { UserService } from "@/services/user.service";
 import { UserProfile } from "@/types/user";
@@ -128,10 +129,12 @@ export default function ProfilePage() {
           <div className="p-6 text-center md:w-1/3 border-b md:border-b-0 md:border-r border-gray-200">
             <div className="w-32 h-32 mx-auto bg-gray-200 rounded-full flex items-center justify-center relative mb-4">
               {user?.photoURL ? (
-                <img 
+                <Image 
                   src={user.photoURL}
                   alt="Profile" 
-                  className="w-full h-full object-cover rounded-full"
+                  fill
+                  sizes="128px"
+                  className="object-cover rounded-full"
                 />
               ) : (
                 <FiUser size={64} className="text-gray-400" />
