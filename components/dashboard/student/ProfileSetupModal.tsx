@@ -94,7 +94,7 @@ export const ProfileSetupModal: React.FC<ProfileSetupModalProps> = ({
             <div className="mt-4">
               <div className="flex justify-between text-xs text-gray-600 mb-1">
                 <span>Profile Completion</span>
-                <span>
+                <span data-testid="profile-completion-percentage">
                   {profileStatus.missingFields.length === 0 ? "100%" : 
                    `${Math.round((4 - profileStatus.missingFields.length) / 4 * 100)}%`}
                 </span>

@@ -19,7 +19,7 @@ export const StatsCards: React.FC<StatsCardsProps> = ({ stats }) => {
           </div>
           <div className="ml-4">
             <p className="text-sm text-gray-600">Saved Hostels</p>
-            <h3 className="text-2xl font-bold" data-testid="favorit es-count">{stats.favorites}</h3>
+            <h3 className="text-2xl font-bold" data-testid="favorites-count">{stats.favorites}</h3>
           </div>
         </div>
         <Link 
