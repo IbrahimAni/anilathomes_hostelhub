@@ -41,3 +41,4 @@ yarn-error.log*
 next-env.d.ts
 test-results/
 playwright-report/
+/config/anilathomes-hostelhub-firebase-adminsdk.json
