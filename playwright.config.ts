@@ -4,6 +4,7 @@ export default defineConfig({
   testDir: "tests",
   workers: process.env.CI ? undefined : 1,
   reporter: [["html"], ["list"]],
+  timeout: 30000,
   webServer: {
     command: 'npm run dev',
     url: 'http://localhost:3000',
