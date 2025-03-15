@@ -11,4 +11,11 @@ export const testData = {
   validPassword: "Password.123$",
   confirmPassword: "Password.123$",
   unmatchedConfirmPassword: "Password1234",
+  userProfile : {
+    displayName: "Ipsum Manifest",
+    department: "Computer Science",
+    level: "200",
+    university: "unilag",
+    phoneNumber: "+2348167820406"
+  }
 };

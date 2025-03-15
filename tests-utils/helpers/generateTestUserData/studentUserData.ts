@@ -1,13 +1,12 @@
-import { UserRole } from '@/types/user';
-import { auth, db } from '@/config/firebase-admin';
+import { db } from '@/config/firebase-admin';
 import { genRandomNumber } from '../genRandomNumber';
 import { testData } from '@/tests-utils/data/testData';
 import { createTestUser } from '../functions/createTestUserHelper';
+import type { UserRole } from '@/types/user';
 
-// Password for the test user
-const {validPassword} = testData;
-//Email domain for test users
+const {userProfile} = testData;
 const testEmailDomain = "@wptest.com";
+const userRole: UserRole = "student";
 
 /**
  * Generates a test user with student role for testing purposes
@@ -16,13 +15,12 @@ const testEmailDomain = "@wptest.com";
 export const genStudentTestUser = async (testEmail? : string): Promise<{userId: string, email: string, displayName: string}> => {
   try {
     const studentEmail = testEmail || `student-test-user-${genRandomNumber()}${testEmailDomain}`;
-    const displayName = 'Ipsum Manifest';
     
     // Set expiration timestamp (24 hours from now)
     const expiresAt = new Date();
     expiresAt.setHours(expiresAt.getHours() + 2);
 
-    const userRecord = await createTestUser(studentEmail, displayName);
+    const userRecord = await createTestUser(studentEmail, userProfile.displayName);
 
     await db.collection("users").doc(userRecord.uid).set({
       uid: userRecord.uid,
@@ -33,7 +31,7 @@ export const genStudentTestUser = async (testEmail? : string): Promise<{userId: 
       photoURL: null,
       createdAt: new Date(),
       lastLoginAt: new Date(),
-      role: "student",
+      role: userRole,
       expiresAt,
     });
 
@@ -48,22 +46,15 @@ export const genStudentTestUser = async (testEmail? : string): Promise<{userId: 
   }
 };
 
-export const genStudentTestUserWithCompletedProfile = async (testEmail?: string): Promise<{userId: string, email: string, displayName: string}> => {
+export const genStudentTestUserWithCompletedProfile = async (testEmail?: string): Promise<{userId: string, email: string, displayName: string, department: string, university: string, phoneNumber: string, level: string}> => {
   try {
     const studentEmail = testEmail || `student-test-user-${genRandomNumber()}${testEmailDomain}`;
-    const displayName = 'Ipsum Manifest';
     
     // Set expiration timestamp (24 hours from now)
     const expiresAt = new Date();
     expiresAt.setHours(expiresAt.getHours() + 2);
-    const userProfile = {
-      department: "Computer Science",
-      level: "200",
-      university: "unilag",
-      phoneNumber: "+2348167820406"
-    }
 
-    const userRecord = await createTestUser(studentEmail, displayName);
+    const userRecord = await createTestUser(studentEmail, userProfile.displayName);
 
     await db.collection("users").doc(userRecord.uid).set({
       uid: userRecord.uid,
@@ -74,7 +65,7 @@ export const genStudentTestUserWithCompletedProfile = async (testEmail?: string)
       photoURL: null,
       createdAt: new Date(),
       lastLoginAt: new Date(),
-      role: "student",
+      role: userRole,
       expiresAt,
       department: userProfile.department,
       level: userProfile.level,
@@ -84,7 +75,11 @@ export const genStudentTestUserWithCompletedProfile = async (testEmail?: string)
   return {
       userId: userRecord.uid,
       email: studentEmail,
-      displayName: "Ipsum Manifest",
+      displayName: userProfile.displayName,
+      department: userProfile.department,
+      university: userProfile.university,
+      phoneNumber: userProfile.phoneNumber,
+      level: userProfile.level,
     };
   } catch (error) {
     console.error('Error creating test user:', error);
