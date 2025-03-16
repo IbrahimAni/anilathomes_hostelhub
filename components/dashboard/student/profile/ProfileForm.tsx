@@ -236,7 +236,9 @@ const ProfileForm: React.FC<ProfileFormProps> = ({
               </div>
               <select
                 id="level"
-                {...register("level", { required: "Please select your level" })}
+                {...register("level", {
+                  required: "Please select your level"
+                })}
                 data-testid="select-level"
                 className={`pl-12 ${selectClasses(errors.level)}`}
                 onChange={handleInputChange}
