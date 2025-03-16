@@ -1,5 +1,9 @@
 import { test, expect } from "@playwright/test";
 import { testData as LoginData } from "@/tests-utils/data/testData";
+import { genStudentTestUserWithCompletedProfile } from "@/tests-utils/helpers/generateTestUserData/studentUserData";
+import { genAgentTestUser } from "@/tests-utils/helpers/generateTestUserData/agentUserData";
+import { genBusinessTestUser } from "@/tests-utils/helpers/generateTestUserData/businessUserData";
+import { cleanupTestUsers } from "@/tests-utils/helpers/cleanupTestData/cleanupTestUsers";
 
 test.describe("Login suite", () => {
   const {studentEmail, agentEmail, businessEmail, validPassword} = LoginData;
@@ -35,28 +39,32 @@ test.describe("Login suite", () => {
   });
 
   test("login as a student", async ({ page }) => {
-    await page.getByTestId("email-input").fill(studentEmail);
+    const {email} = await genStudentTestUserWithCompletedProfile();
+    await page.getByTestId("email-input").fill(email);
     await page.getByTestId("password-input").fill(validPassword);
     await page.getByTestId("submit-button").click();
     await expect(page).toHaveURL(/.*student/);
   });
 
   test("login as an agent", async ({ page }) => {
-    await page.getByTestId("email-input").fill(agentEmail);
+    const {email} = await genAgentTestUser();
+    await page.getByTestId("email-input").fill(email);
     await page.getByTestId("password-input").fill(validPassword);
     await page.getByTestId("submit-button").click();
     await expect(page).toHaveURL(/.*agent/);
   });
 
   test("login as a business", async ({ page }) => {
-    await page.getByTestId("email-input").fill(businessEmail);
+    const {email} = await genBusinessTestUser();
+    await page.getByTestId("email-input").fill(email);
     await page.getByTestId("password-input").fill(validPassword);
     await page.getByTestId("submit-button").click();
     await expect(page).toHaveURL(/.*business/);
   });
 
   test("Unable to login as a student and try to access agent dashboard", async ({ page }) => {
-    await page.getByTestId("email-input").fill(studentEmail);
+    const {email} = await genStudentTestUserWithCompletedProfile();
+    await page.getByTestId("email-input").fill(email);
     await page.getByTestId("password-input").fill(validPassword);
     await page.getByTestId("submit-button").click();
     await expect(page).toHaveURL(/.*student/);
@@ -68,7 +76,8 @@ test.describe("Login suite", () => {
   });
 
   test("Unable to login as a student and try to access business dashboard", async ({ page }) => {
-    await page.getByTestId("email-input").fill(studentEmail);
+    const {email} = await genStudentTestUserWithCompletedProfile();
+    await page.getByTestId("email-input").fill(email);
     await page.getByTestId("password-input").fill(validPassword);
     await page.getByTestId("submit-button").click();
     await expect(page).toHaveURL(/.*student/);
@@ -80,7 +89,8 @@ test.describe("Login suite", () => {
   });
 
   test("Unable to login as an agent and try to access student dashboard", async ({ page }) => {
-    await page.getByTestId("email-input").fill(agentEmail);
+    const {email} = await genAgentTestUser();
+    await page.getByTestId("email-input").fill(email);
     await page.getByTestId("password-input").fill(validPassword);
     await page.getByTestId("submit-button").click();
     await expect(page).toHaveURL(/.*agent/);
@@ -92,7 +102,8 @@ test.describe("Login suite", () => {
   });
 
   test("Unable to login as an agent and try to access business dashboard", async ({ page }) => {
-    await page.getByTestId("email-input").fill(agentEmail);
+    const {email} = await genAgentTestUser();
+    await page.getByTestId("email-input").fill(email);
     await page.getByTestId("password-input").fill(validPassword);
     await page.getByTestId("submit-button").click();
     await expect(page).toHaveURL(/.*agent/);
@@ -104,7 +115,8 @@ test.describe("Login suite", () => {
   });
 
   test("Unable to login as a business and try to access student dashboard", async ({ page }) => {
-    await page.getByTestId("email-input").fill(businessEmail);
+    const {email} = await genBusinessTestUser();
+    await page.getByTestId("email-input").fill(email);
     await page.getByTestId("password-input").fill(validPassword);
     await page.getByTestId("submit-button").click();
     await expect(page).toHaveURL(/.*business/);
@@ -116,7 +128,8 @@ test.describe("Login suite", () => {
   });
 
   test("Unable to login as a business and try to access agent dashboard", async ({ page }) => {
-    await page.getByTestId("email-input").fill(businessEmail);
+    const {email} = await genBusinessTestUser();
+    await page.getByTestId("email-input").fill(email);
     await page.getByTestId("password-input").fill(validPassword);
     await page.getByTestId("submit-button").click();
     await expect(page).toHaveURL(/.*business/);
@@ -126,4 +139,8 @@ test.describe("Login suite", () => {
     // Verify we are redirected back to business dashboard
     await expect(page).toHaveURL(/.*business/);
   });
+
+   test.afterAll(async () => {
+      await cleanupTestUsers();
+    });
 });

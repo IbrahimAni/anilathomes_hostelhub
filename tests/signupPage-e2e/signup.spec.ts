@@ -1,6 +1,8 @@
 import { test, expect } from "@playwright/test";
 import { testData as SignUpData } from "@/tests-utils/data/testData";
-import { genRandomNumber } from "@/tests-utils/helpers/genRandomNumber";
+import { cleanupTestUsers } from "@/tests-utils/helpers/cleanupTestData/cleanupTestUsers";
+import { genTestUserEmailData } from "@/tests-utils/helpers/generateTestUserData/genUserTestEmailData";
+import { genStudentTestUser } from "@/tests-utils/helpers/generateTestUserData/studentUserData";
 
 test.describe("Signup test suite", () => {
   const {
@@ -11,9 +13,6 @@ test.describe("Signup test suite", () => {
     pwdWithoutLowercase,
     validPassword,
     unmatchedConfirmPassword,
-    studentEmail,
-    agentEmail,
-    businessEmail
   } = SignUpData;
 
   test.beforeEach(async ({ page }) => {
@@ -21,45 +20,50 @@ test.describe("Signup test suite", () => {
     await expect(page).toHaveURL(/.*signup/);
   });
 
-  test.skip("Signup with valid credentials as a student", async ({ page }) => {
-    const randomEmail = studentEmail.replace('@', `${genRandomNumber()}@`);
+  test("Signup with valid credentials as a student", async ({ page }) => {
+    const randomEmail = genTestUserEmailData("student");
     await page.getByTestId("email-input").fill(randomEmail);
     await page.getByTestId("password-input").fill(validPassword);
     await page.getByTestId("confirm-password-input").fill(validPassword);
     await page.getByTestId("submit-button").click();
     await page.getByTestId("role-student").click();
     await expect(page).toHaveURL(/.*student/);
-    await expect(page.getByRole('heading', { name: 'Welcome to HostelHub!' })).toBeVisible();
+    await expect(
+      page.getByRole("heading", { name: "Welcome to HostelHub!" })
+    ).toBeVisible();
   });
 
-  test.skip("Signup with valid credentials as an agent", async ({ page }) => {
-    const randomEmail = agentEmail.replace('@', `${genRandomNumber()}@`);
+  test("Signup with valid credentials as an agent", async ({ page }) => {
+    const randomEmail = genTestUserEmailData("agent");
     await page.getByTestId("email-input").fill(randomEmail);
     await page.getByTestId("password-input").fill(validPassword);
     await page.getByTestId("confirm-password-input").fill(validPassword);
     await page.getByTestId("submit-button").click();
     await page.getByTestId("role-agent").click();
-    await expect(page).toHaveURL(/.*agent/);  });
+    await expect(page).toHaveURL(/.*agent/);
+  });
 
-  test.skip("Signup with valid credentials as a business", async ({ page }) => {
-    const randomEmail = businessEmail.replace('@', `${genRandomNumber()}@`);
+  test("Signup with valid credentials as a business", async ({ page }) => {
+    const randomEmail = genTestUserEmailData("business");
     await page.getByTestId("email-input").fill(randomEmail);
     await page.getByTestId("password-input").fill(validPassword);
     await page.getByTestId("confirm-password-input").fill(validPassword);
     await page.getByTestId("submit-button").click();
     await page.getByTestId("role-business").click();
-    await expect(page).toHaveURL(/.*business/);  });
+    await expect(page).toHaveURL(/.*business/);
+  });
 
-  test("Can't signup with existing email", async ({ page }) => {    
-    // Try to register with the same email
-    await page.getByTestId("email-input").fill(studentEmail);
+  test("Can't signup with existing email", async ({ page }) => {
+    const {email} = await genStudentTestUser();
+    await page.getByTestId("email-input").fill(email);
     await page.getByTestId("password-input").fill(validPassword);
     await page.getByTestId("confirm-password-input").fill(validPassword);
     await page.getByTestId("submit-button").click();
-    
-    // Expect to see an error message
+
     await expect(page.getByTestId("form-error")).toBeVisible();
-    await expect(page.getByTestId("form-error")).toContainText("email-already-in-use");
+    await expect(page.getByTestId("form-error")).toContainText(
+      "email-already-in-use"
+    );
   });
 
   test("Navigate to sign in page", async ({ page }) => {
@@ -125,5 +129,9 @@ test.describe("Signup test suite", () => {
     await expect(page.getByTestId("confirm-password-error")).toHaveText(
       "Passwords don't match"
     );
+  });
+
+  test.afterAll(async () => {
+    await cleanupTestUsers();
   });
 });
