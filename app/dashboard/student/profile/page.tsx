@@ -72,20 +72,31 @@ export default function ProfilePage() {
     }));
   };
 
-  const handleProfileUpdate = async (e: React.FormEvent) => {
-    e.preventDefault();
+  // Updated to accept form data directly instead of event
+  const handleProfileUpdate = async (formData?: any) => {
     setSaving(true);
     
     try {
       if (!user) return;
       
+      // Use formData if provided (from React Hook Form), otherwise use profileForm state
+      const dataToUpdate = formData || profileForm;
+      
       await UserService.updateUserProfile(user.uid, {
-        displayName: profileForm.displayName,
-        phoneNumber: profileForm.phoneNumber,
-        university: profileForm.university,
-        department: profileForm.department,
-        level: profileForm.level
+        displayName: dataToUpdate.displayName,
+        phoneNumber: dataToUpdate.phoneNumber,
+        university: dataToUpdate.university,
+        department: dataToUpdate.department,
+        level: dataToUpdate.level
       });
+      
+      // Update local form state if data was passed from the form
+      if (formData) {
+        setProfileForm(prev => ({
+          ...prev,
+          ...formData
+        }));
+      }
       
       toast.success("Profile updated successfully!");
       
