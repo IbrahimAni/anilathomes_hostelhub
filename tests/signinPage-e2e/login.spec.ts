@@ -6,7 +6,7 @@ import { genBusinessTestUser } from "@/tests-utils/helpers/generateTestUserData/
 import { cleanupTestUsers } from "@/tests-utils/helpers/cleanupTestData/cleanupTestUsers";
 
 test.describe("Login suite", () => {
-  const {studentEmail, agentEmail, businessEmail, validPassword} = LoginData;
+  const {validPassword} = LoginData;
   const testData = {
     invalidEmail: "invalidEmail@invalidEmail",
     invalidPassword: "invalidPassword",
