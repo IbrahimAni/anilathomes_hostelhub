@@ -6,11 +6,11 @@ import { auth } from "@/config/firebase";
 import { Payment, PaymentFilterType } from "@/app/types/payment";
 
 // Components
-import PaymentHeader from "@/app/components/dashboard/student/payments/PaymentHeader";
-import PaymentFilterTabs from "@/app/components/dashboard/student/payments/PaymentFilterTabs";
-import PaymentTable from "@/app/components/dashboard/student/payments/PaymentTable";
-import EmptyPaymentState from "@/app/components/dashboard/student/payments/EmptyPaymentState";
-import LoadingState from "@/app/components/dashboard/student/payments/LoadingState";
+import PaymentHeader from "@/components/dashboard/student/payments/PaymentHeader";
+import PaymentFilterTabs from "@/components/dashboard/student/payments/PaymentFilterTabs";
+import PaymentTable from "@/components/dashboard/student/payments/PaymentTable";
+import EmptyPaymentState from "@/components/dashboard/student/payments/EmptyPaymentState";
+import LoadingState from "@/components/dashboard/student/payments/LoadingState";
 
 export default function PaymentsPage() {
   const [payments, setPayments] = useState<Payment[]>([]);
