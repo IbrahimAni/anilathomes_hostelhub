@@ -4,11 +4,6 @@ import React from 'react';
 import Link from 'next/link';
 
 const Header = () => {
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    console.log('Sign in button clicked');
-  };
-
   return (
     <header className="fixed w-full top-0 z-50 flex justify-between items-center p-4 bg-white/95 backdrop-blur-sm shadow-sm">
       <div className="text-2xl font-bold text-primary">HostelHub</div>
@@ -24,11 +19,11 @@ const Header = () => {
         </Link>
       </nav>
       <div className="flex items-center gap-4">
-        <form onSubmit={handleSubmit}>
-          <button type="submit" className="hidden md:block px-4 py-2 text-primary hover:bg-primary hover:text-white border border-primary rounded transition-colors">
+        <Link href="/login">
+          <button type="button" className="hidden md:block px-4 py-2 text-primary hover:bg-primary hover:text-white border border-primary rounded transition-colors">
             Sign In
           </button>
-        </form>
+        </Link>
         {/* Mobile menu button */}
         <button className="md:hidden p-2 text-gray-600 hover:text-primary transition-colors">
           <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">

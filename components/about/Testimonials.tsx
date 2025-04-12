@@ -63,7 +63,6 @@ export default function Testimonials() {
     };
 
     useEffect(() => {
-        // eslint-disable-next-line react-hooks/exhaustive-deps
         let resizeTimer: NodeJS.Timeout;
         let transitionFrame: number;
 
@@ -96,7 +95,7 @@ export default function Testimonials() {
             cancelAnimationFrame(transitionFrame);
             stopAutoSlide();
         };
-    }, []);
+    });
 
     useEffect(() => {
         if (current === testimonials.length) {

@@ -1,19 +1,25 @@
-import AboutBanner from "@/app/components/about/AboutBanner";
-import OurStory from "@/app/components/about/OurStory";
-import OurMission from "@/app/components/about/OurMission";
-import Testimonials from "@/app/components/about/Testimonials";
-import FAQ from "@/app/components/about/FAQ";
-import ContactUs from "@/app/components/about/ContactUs";
+import AboutBanner from "@/components/about/AboutBanner";
+import OurStory from "@/components/about/OurStory";
+import OurMission from "@/components/about/OurMission";
+import Testimonials from "@/components/about/Testimonials";
+import FAQ from "@/components/about/FAQ";
+import ContactUs from "@/components/about/ContactUs";
+import Header from "@/components/landing/Header";
+import Footer from "@/components/landing/Footer";
 
 export default function AboutPage() {
   return (
-    <main className="min-h-screen">
-      <AboutBanner />
-      <OurStory />
-      <OurMission />
-      <Testimonials />
-      <FAQ />
-      <ContactUs />
-    </main>
+    <>
+      <Header />
+      <main className="min-h-screen">
+        <AboutBanner />
+        <OurStory />
+        <OurMission />
+        <Testimonials />
+        <FAQ />
+        <ContactUs />
+      </main>
+      <Footer />
+    </>
   );
 }
