@@ -7,8 +7,8 @@ import {
   FiBookmark,
 } from "react-icons/fi";
 import { IoSchoolOutline } from "react-icons/io5";
-import { ProfileFormProps } from "@/types/profile";
-import { useForm } from "react-hook-form";
+import { ProfileFormProps, ProfileFormData } from "@/types/profile";
+import { useForm, FieldError } from "react-hook-form";
 
 const ProfileForm: React.FC<ProfileFormProps> = ({
   profileForm,
@@ -20,24 +20,24 @@ const ProfileForm: React.FC<ProfileFormProps> = ({
     register,
     handleSubmit,
     formState: { errors },
-  } = useForm({
+  } = useForm<ProfileFormData>({
     defaultValues: profileForm,
     mode: "onBlur",
   });
 
-  const onSubmit = (data: any) => {
+  const onSubmit = (data: ProfileFormData) => {
     handleProfileUpdate(data);
   };
 
   // Common input styling
-  const inputClasses = (error?: any) =>
+  const inputClasses = (error?: FieldError) =>
     `pl-10 w-full rounded-lg py-2.5 border ${
       error
         ? "border-red-500 focus:border-red-500 focus:ring-red-500"
         : "border-gray-300 focus:border-blue-600 focus:ring-blue-600"
     } focus:ring-1 transition-all duration-200 shadow-sm`;
 
-  const selectClasses = (error?: any) =>
+  const selectClasses = (error?: FieldError) =>
     `w-full rounded-lg py-2.5 pl-3 pr-10 border ${
       error
         ? "border-red-500 focus:border-red-500 focus:ring-red-500"
@@ -45,7 +45,7 @@ const ProfileForm: React.FC<ProfileFormProps> = ({
     } focus:ring-1 transition-all duration-200 shadow-sm appearance-none bg-white`;
 
   const labelClasses = "block text-sm font-medium text-gray-800 mb-1.5";
-  const iconClasses = (error?: any) =>
+  const iconClasses = (error?: FieldError) =>
     error ? "text-red-500" : "text-gray-500";
   const errorClasses = "mt-1.5 text-sm text-red-500 font-medium";
 

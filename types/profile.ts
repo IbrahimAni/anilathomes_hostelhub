@@ -7,12 +7,13 @@ export type ProfileFormData = {
   university: string;
   department: string;
   level: string;
+  [key: string]: string; // Allow for dynamic properties
 };
 
 export type ProfileFormProps = {
   profileForm: ProfileFormData;
   handleInputChange: (e: ChangeEvent<HTMLInputElement | HTMLSelectElement>) => void;
-  handleProfileUpdate: (e: React.FormEvent) => Promise<void>;
+  handleProfileUpdate: (data: ProfileFormData) => Promise<void>;
   saving: boolean;
 };
 

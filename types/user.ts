@@ -16,6 +16,13 @@ export interface UserProfile {
   university?: string;
   department?: string;
   level?: string;
+  // Added business-specific fields
+  businessName?: string;
+  businessDescription?: string;
+  businessAddress?: string;
+  businessPhone?: string;
+  businessEmail?: string;
+  businessWebsite?: string;
 }
 
 // Extended user interface for app usage

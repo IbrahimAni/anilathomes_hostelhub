@@ -14,11 +14,22 @@ import ProfileForm from "@/components/dashboard/student/profile/ProfileForm";
 import AccountSettings from "@/components/dashboard/student/profile/AccountSettings";
 import LoadingSpinner from "@/components/dashboard/student/profile/LoadingSpinner";
 
+// Define type for profile form data
+interface ProfileFormData {
+  displayName: string;
+  email: string;
+  phoneNumber: string;
+  university: string;
+  department: string;
+  level: string;
+  [key: string]: string; // Allow for dynamic properties
+}
+
 export default function ProfilePage() {
   const [user, setUser] = useState<UserProfile | null>(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
-  const [profileForm, setProfileForm] = useState({
+  const [profileForm, setProfileForm] = useState<ProfileFormData>({
     displayName: "",
     email: "",
     phoneNumber: "",
@@ -72,8 +83,8 @@ export default function ProfilePage() {
     }));
   };
 
-  // Updated to accept form data directly instead of event
-  const handleProfileUpdate = async (formData?: any) => {
+  // Updated to accept form data with our new interface
+  const handleProfileUpdate = async (formData?: ProfileFormData) => {
     setSaving(true);
     
     try {
