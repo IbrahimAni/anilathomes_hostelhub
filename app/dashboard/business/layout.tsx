@@ -50,7 +50,7 @@ function BusinessDashboardContent({ children }: { children: React.ReactNode }) {
       <aside className="hidden md:flex md:flex-col md:w-64 md:fixed md:inset-y-0 bg-white shadow-lg">
         <div className="px-6 pt-8 pb-4 flex flex-col">
           <h1 className="text-xl font-bold text-indigo-600">
-            {businessName || "My Business"}
+            {businessName || "Business Name"}
           </h1>
           <p className="text-xs text-gray-500 mt-1">HostelHub Business</p>
         </div>
@@ -102,7 +102,7 @@ function BusinessDashboardContent({ children }: { children: React.ReactNode }) {
         <div className="px-4 py-3 flex items-center justify-between">
           <div>
             <h1 className="text-lg font-bold text-indigo-600">
-              {businessName || "My Business"}
+              {businessName || "Business Name"}
             </h1>
             <p className="text-xs text-gray-500">HostelHub Business</p>
           </div>
@@ -137,7 +137,7 @@ function BusinessDashboardContent({ children }: { children: React.ReactNode }) {
           >
             <div className="px-6 pt-8 pb-4 flex flex-col">
               <h1 className="text-xl font-bold text-indigo-600">
-                {businessName || "My Business"}
+                {businessName || "Business Name"}
               </h1>
               <p className="text-xs text-gray-500 mt-1">HostelHub Business</p>
               <button
