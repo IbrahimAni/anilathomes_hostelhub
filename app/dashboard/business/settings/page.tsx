@@ -4,24 +4,23 @@ import React, { useState, useEffect } from 'react';
 import { auth } from '@/config/firebase';
 import { UserService } from '@/services/user.service';
 import { UserProfile } from '@/types/user';
-import { useBusinessContext } from '@/context/BusinessContext';
 
 export default function BusinessSettingsPage() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
-  const [businessName, setBusinessName] = useState('');
-  const [businessDescription, setBusinessDescription] = useState('');
-  const [businessAddress, setBusinessAddress] = useState('');
-  const [businessPhone, setBusinessPhone] = useState('');
-  const [businessEmail, setBusinessEmail] = useState('');
-  const [businessWebsite, setBusinessWebsite] = useState('');
   const [successMessage, setSuccessMessage] = useState('');
   const [errorMessage, setErrorMessage] = useState('');
   
-  // Get the business context to update the name globally
-  const { updateBusinessName } = useBusinessContext();
-
+  // Business-specific settings
+  const [defaultCommissionRate, setDefaultCommissionRate] = useState(10);
+  const [enableEmailNotifications, setEnableEmailNotifications] = useState(true);
+  const [enableSmsNotifications, setEnableSmsNotifications] = useState(false);
+  const [autoApproveBookings, setAutoApproveBookings] = useState(false);
+  const [paymentReminders, setPaymentReminders] = useState(true);
+  const [defaultCurrency, setDefaultCurrency] = useState('NGN');
+  const [taxRate, setTaxRate] = useState(7.5);
+  
   useEffect(() => {
     const fetchUserProfile = async () => {
       try {
@@ -30,18 +29,20 @@ export default function BusinessSettingsPage() {
           const profile = await UserService.getUserProfile(user.uid);
           if (profile) {
             setUserProfile(profile);
-            setBusinessName(profile.businessName || '');
-            setBusinessDescription(profile.businessDescription || '');
-            setBusinessAddress(profile.businessAddress || '');
-            setBusinessPhone(profile.businessPhone || '');
-            setBusinessEmail(profile.businessEmail || '');
-            setBusinessWebsite(profile.businessWebsite || '');
+            // Set business settings from profile if they exist
+            setDefaultCommissionRate(profile.defaultCommissionRate ?? 10);
+            setEnableEmailNotifications(profile.enableEmailNotifications !== false);
+            setEnableSmsNotifications(profile.enableSmsNotifications ?? false);
+            setAutoApproveBookings(profile.autoApproveBookings ?? false);
+            setPaymentReminders(profile.paymentReminders !== false);
+            setDefaultCurrency(profile.defaultCurrency ?? 'NGN');
+            setTaxRate(profile.taxRate ?? 7.5);
           }
         }
         setLoading(false);
       } catch (error) {
         console.error('Error fetching user profile:', error);
-        setErrorMessage('Failed to load profile data');
+        setErrorMessage('Failed to load settings data');
         setLoading(false);
       }
     };
@@ -57,19 +58,16 @@ export default function BusinessSettingsPage() {
 
     try {
       const user = auth.currentUser;
-      if (user && userProfile) {
+      if (user) {
         await UserService.updateUserProfile(user.uid, {
-          businessName,
-          businessDescription,
-          businessAddress,
-          businessPhone,
-          businessEmail,
-          businessWebsite
+          defaultCommissionRate,
+          enableEmailNotifications,
+          enableSmsNotifications,
+          autoApproveBookings,
+          paymentReminders,
+          defaultCurrency,
+          taxRate
         });
-        
-        // Update the business name in the context
-        // This will cause the sidebar to update immediately
-        updateBusinessName(businessName);
         
         setSuccessMessage('Business settings saved successfully');
       }
@@ -94,9 +92,9 @@ export default function BusinessSettingsPage() {
     <div className="max-w-4xl mx-auto">
       <div className="bg-white shadow-md rounded-lg overflow-hidden">
         <div className="px-6 py-5 border-b border-gray-200">
-          <h2 className="text-xl font-semibold text-gray-800">Business Settings</h2>
+          <h2 className="text-xl font-semibold text-gray-800">Business Preferences</h2>
           <p className="text-sm text-gray-500 mt-1">
-            Manage your business information
+            Configure your business operation settings
           </p>
         </div>
 
@@ -112,95 +110,141 @@ export default function BusinessSettingsPage() {
               {errorMessage}
             </div>
           )}
+          
+          <div className="border-b border-gray-200 pb-4">
+            <h3 className="text-lg font-medium text-gray-800 mb-4">Commission Settings</h3>
+            <div>
+              <label htmlFor="defaultCommissionRate" className="block text-sm font-medium text-gray-700 mb-1">
+                Default Agent Commission Rate (%)
+              </label>
+              <input
+                type="number"
+                id="defaultCommissionRate"
+                min="0"
+                max="100"
+                step="0.5"
+                value={defaultCommissionRate}
+                onChange={(e) => setDefaultCommissionRate(Number(e.target.value))}
+                className="w-32 px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
+              />
+              <p className="mt-1 text-xs text-gray-500">
+                Default percentage agents will earn from successful bookings
+              </p>
+            </div>
+          </div>
 
-          <div>
-            <label htmlFor="businessName" className="block text-sm font-medium text-gray-700 mb-1">
-              Business Name
-            </label>
-            <input
-              type="text"
-              id="businessName"
-              value={businessName}
-              onChange={(e) => setBusinessName(e.target.value)}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
-              placeholder="Enter your business name"
-            />
-            <p className="mt-1 text-xs text-gray-500">
-              This name will appear in your dashboard and communications
-            </p>
+          <div className="border-b border-gray-200 pb-4">
+            <h3 className="text-lg font-medium text-gray-800 mb-4">Financial Settings</h3>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div>
+                <label htmlFor="defaultCurrency" className="block text-sm font-medium text-gray-700 mb-1">
+                  Default Currency
+                </label>
+                <select
+                  id="defaultCurrency"
+                  value={defaultCurrency}
+                  onChange={(e) => setDefaultCurrency(e.target.value)}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
+                >
+                  <option value="NGN">Nigerian Naira (₦)</option>
+                  <option value="USD">US Dollar ($)</option>
+                  <option value="EUR">Euro (€)</option>
+                  <option value="GBP">British Pound (£)</option>
+                </select>
+              </div>
+
+              <div>
+                <label htmlFor="taxRate" className="block text-sm font-medium text-gray-700 mb-1">
+                  Tax Rate (%)
+                </label>
+                <input
+                  type="number"
+                  id="taxRate"
+                  min="0"
+                  max="100"
+                  step="0.1"
+                  value={taxRate}
+                  onChange={(e) => setTaxRate(Number(e.target.value))}
+                  className="w-32 px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
+                />
+                <p className="mt-1 text-xs text-gray-500">
+                  Applied to invoices (use 0 for tax exempt)
+                </p>
+              </div>
+            </div>
+          </div>
+
+          <div className="border-b border-gray-200 pb-4">
+            <h3 className="text-lg font-medium text-gray-800 mb-4">Booking Preferences</h3>
+            <div className="space-y-4">
+              <div className="flex items-start">
+                <div className="flex items-center h-5">
+                  <input
+                    id="autoApproveBookings"
+                    type="checkbox"
+                    checked={autoApproveBookings}
+                    onChange={(e) => setAutoApproveBookings(e.target.checked)}
+                    className="h-4 w-4 text-indigo-600 border-gray-300 rounded focus:ring-indigo-500"
+                  />
+                </div>
+                <div className="ml-3 text-sm">
+                  <label htmlFor="autoApproveBookings" className="font-medium text-gray-700">Auto-approve bookings</label>
+                  <p className="text-gray-500">Automatically approve booking requests without your manual review</p>
+                </div>
+              </div>
+            </div>
           </div>
 
           <div>
-            <label htmlFor="businessDescription" className="block text-sm font-medium text-gray-700 mb-1">
-              Business Description
-            </label>
-            <textarea
-              id="businessDescription"
-              value={businessDescription}
-              onChange={(e) => setBusinessDescription(e.target.value)}
-              rows={3}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
-              placeholder="Brief description of your business"
-            />
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div>
-              <label htmlFor="businessAddress" className="block text-sm font-medium text-gray-700 mb-1">
-                Business Address
-              </label>
-              <input
-                type="text"
-                id="businessAddress"
-                value={businessAddress}
-                onChange={(e) => setBusinessAddress(e.target.value)}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
-                placeholder="Enter your business address"
-              />
-            </div>
-
-            <div>
-              <label htmlFor="businessPhone" className="block text-sm font-medium text-gray-700 mb-1">
-                Business Phone
-              </label>
-              <input
-                type="tel"
-                id="businessPhone"
-                value={businessPhone}
-                onChange={(e) => setBusinessPhone(e.target.value)}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
-                placeholder="Enter your business phone"
-              />
-            </div>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div>
-              <label htmlFor="businessEmail" className="block text-sm font-medium text-gray-700 mb-1">
-                Business Email
-              </label>
-              <input
-                type="email"
-                id="businessEmail"
-                value={businessEmail}
-                onChange={(e) => setBusinessEmail(e.target.value)}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
-                placeholder="Enter your business email"
-              />
-            </div>
-
-            <div>
-              <label htmlFor="businessWebsite" className="block text-sm font-medium text-gray-700 mb-1">
-                Business Website
-              </label>
-              <input
-                type="url"
-                id="businessWebsite"
-                value={businessWebsite}
-                onChange={(e) => setBusinessWebsite(e.target.value)}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
-                placeholder="https://example.com"
-              />
+            <h3 className="text-lg font-medium text-gray-800 mb-4">Notification Preferences</h3>
+            <div className="space-y-4">
+              <div className="flex items-start">
+                <div className="flex items-center h-5">
+                  <input
+                    id="enableEmailNotifications"
+                    type="checkbox"
+                    checked={enableEmailNotifications}
+                    onChange={(e) => setEnableEmailNotifications(e.target.checked)}
+                    className="h-4 w-4 text-indigo-600 border-gray-300 rounded focus:ring-indigo-500"
+                  />
+                </div>
+                <div className="ml-3 text-sm">
+                  <label htmlFor="enableEmailNotifications" className="font-medium text-gray-700">Email notifications</label>
+                  <p className="text-gray-500">Receive email alerts for new bookings, payments, and other important events</p>
+                </div>
+              </div>
+              
+              <div className="flex items-start">
+                <div className="flex items-center h-5">
+                  <input
+                    id="enableSmsNotifications"
+                    type="checkbox"
+                    checked={enableSmsNotifications}
+                    onChange={(e) => setEnableSmsNotifications(e.target.checked)}
+                    className="h-4 w-4 text-indigo-600 border-gray-300 rounded focus:ring-indigo-500"
+                  />
+                </div>
+                <div className="ml-3 text-sm">
+                  <label htmlFor="enableSmsNotifications" className="font-medium text-gray-700">SMS notifications</label>
+                  <p className="text-gray-500">Receive SMS alerts for high-priority events (may incur additional charges)</p>
+                </div>
+              </div>
+              
+              <div className="flex items-start">
+                <div className="flex items-center h-5">
+                  <input
+                    id="paymentReminders"
+                    type="checkbox"
+                    checked={paymentReminders}
+                    onChange={(e) => setPaymentReminders(e.target.checked)}
+                    className="h-4 w-4 text-indigo-600 border-gray-300 rounded focus:ring-indigo-500"
+                  />
+                </div>
+                <div className="ml-3 text-sm">
+                  <label htmlFor="paymentReminders" className="font-medium text-gray-700">Payment reminders</label>
+                  <p className="text-gray-500">Send automated reminders to students about upcoming rent payments</p>
+                </div>
+              </div>
             </div>
           </div>
 
@@ -216,7 +260,7 @@ export default function BusinessSettingsPage() {
                   Saving...
                 </>
               ) : (
-                'Save Changes'
+                'Save Preferences'
               )}
             </button>
           </div>

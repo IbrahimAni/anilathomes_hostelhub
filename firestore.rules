@@ -51,7 +51,8 @@ service cloud.firestore {
     match /bookings/{bookingId} {
       allow read: if request.auth != null && (
         resource.data.userId == request.auth.uid || 
-        resource.data.businessId == request.auth.uid
+        resource.data.businessId == request.auth.uid ||
+        resource.data.agentId != null
       );
       allow create: if request.auth != null && request.resource.data.userId == request.auth.uid;
       allow update: if request.auth != null && (
@@ -83,10 +84,29 @@ service cloud.firestore {
     
     // Allow business users to access agents that work with them
     match /agents/{agentId} {
-      allow read: if request.auth != null && (
+      allow read, write: if request.auth != null && (
         resource.data.agentId == request.auth.uid || 
         resource.data.businessIds[request.auth.uid] == true ||
-        resource.data.businessIds is list && request.auth.uid in resource.data.businessIds
+        (resource.data.businessIds is list && request.auth.uid in resource.data.businessIds) ||
+        isBusinessUser()
+      );
+    }
+    
+    // Allow business users to access agent commissions
+    match /agentCommissions/{commissionId} {
+      allow read, write: if request.auth != null && (
+        resource.data.agentId == request.auth.uid || 
+        resource.data.businessId == request.auth.uid ||
+        isBusinessUser()
+      );
+    }
+    
+    // Allow access to agent bookings data
+    match /agentBookings/{bookingId} {
+      allow read, write: if request.auth != null && (
+        resource.data.agentId == request.auth.uid || 
+        resource.data.businessId == request.auth.uid ||
+        isBusinessUser()
       );
     }
     

@@ -23,6 +23,14 @@ export interface UserProfile {
   businessPhone?: string;
   businessEmail?: string;
   businessWebsite?: string;
+  // Added business settings fields
+  defaultCommissionRate?: number;
+  enableEmailNotifications?: boolean;
+  enableSmsNotifications?: boolean;
+  autoApproveBookings?: boolean;
+  paymentReminders?: boolean;
+  defaultCurrency?: string;
+  taxRate?: number;
 }
 
 // Extended user interface for app usage
