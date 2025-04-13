@@ -1,7 +1,9 @@
-import type { Metadata } from "next";
+"use client";
+
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import { Toaster } from 'react-hot-toast';
+import { useEffect } from 'react';
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -13,22 +15,21 @@ const geistMono = Geist_Mono({
   subsets: ["latin"],
 });
 
-export const metadata: Metadata = {
-  title: "HostelHub",
-  description: "Find the perfect hostel for your stay",
-  icons: {
-    icon: '/assets/icons/hostelhubFavicon.svg',
-    shortcut: '/assets/icons/hostelhubFavicon.svg',
-  },
-};
-
 export default function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  // Force light mode by default to fix the mobile text color issue
+  const theme = 'light';
+  
+  // Apply theme attribute to html element
+  useEffect(() => {
+    document.documentElement.setAttribute('data-theme', theme);
+  }, [theme]);
+
   return (
-    <html lang="en">
+    <html lang="en" data-theme={theme}>
       <head>
         {/* Font Awesome CDN Link */}
         <link 
