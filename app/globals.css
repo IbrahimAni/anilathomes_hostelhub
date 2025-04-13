@@ -7,15 +7,28 @@
   --foreground: #171717;
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+/* Instead of automatically using prefers-color-scheme, we'll use a class-based approach */
+/* This prevents dark mode from being automatically enabled on mobile devices */
+[data-theme="dark"] {
+  --background: #0a0a0a;
+  --foreground: #ededed;
 }
 
 body {
   color: var(--foreground);
   background: var(--background);
   font-family: Arial, Helvetica, sans-serif;
+}
+
+/* Ensure form inputs always have proper contrast regardless of dark/light mode */
+input, textarea, select {
+  color: #171717; /* Always use dark text in inputs */
+  background-color: #ffffff; /* Always use light backgrounds for inputs */
+}
+
+/* For any form elements in explicit dark mode containers, we can adjust separately */
+[data-theme="dark"] input:not([type="radio"]):not([type="checkbox"]),
+[data-theme="dark"] textarea,
+[data-theme="dark"] select {
+  border-color: #3f3f46;
 }
