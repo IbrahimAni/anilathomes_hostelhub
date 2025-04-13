@@ -1,46 +1,108 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Chart as ChartJS, ArcElement, Tooltip, Legend } from "chart.js";
 import { Doughnut } from "react-chartjs-2";
+import { useRouter } from "next/navigation";
+import { auth } from "@/config/firebase";
+import { BusinessService } from "@/services/business.service";
+import { BookingData, ChartData } from "@/types/business";
 
 ChartJS.register(ArcElement, Tooltip, Legend);
 
 export default function BusinessDashboardPage() {
-  // Revenue statistics
-  const [revenueStats] = useState({
-    totalRevenue: "₦4,250,000",
-    pendingPayments: "₦650,000",
-    projectedRevenue: "₦5,000,000",
+  const router = useRouter();
+  const [loading, setLoading] = useState(true);
+  
+  // State for dashboard statistics
+  const [revenueStats, setRevenueStats] = useState({
+    totalRevenue: "₦0",
+    pendingPayments: "₦0",
+    projectedRevenue: "₦0",
   });
 
-  // Booking statistics
-  const [bookingStats] = useState({
-    totalBookings: 32,
-    pendingRequests: 7,
-    confirmedBookings: 25,
+  // State for booking statistics
+  const [bookingStats, setBookingStats] = useState({
+    totalBookings: 0,
+    pendingRequests: 0,
+    confirmedBookings: 0,
   });
 
-  // Chart data
-  const [occupancyChartData] = useState({
+  // State for chart data
+  const [occupancyChartData, setOccupancyChartData] = useState<ChartData>({
     labels: ["Occupied", "Vacant"],
     datasets: [
       {
-        data: [75, 25],
-        backgroundColor: ["#4F46E5", "#E5E7EB"],
-        borderColor: ["#4F46E5", "#E5E7EB"],
+        label: "Occupancy",
+        data: [0, 100],
+        backgroundColor: "#4F46E5",
+        borderColor: "#4F46E5",
         borderWidth: 1,
       },
     ],
   });
 
+  // State for recent bookings
+  const [recentBookings, setRecentBookings] = useState<BookingData[]>([]);
+
+  // Fetch data from Firebase on component mount
+  useEffect(() => {
+    const fetchDashboardData = async () => {
+      try {
+        // Check if user is authenticated
+        const currentUser = auth.currentUser;
+        if (!currentUser) {
+          router.push('/login');
+          return;
+        }
+
+        // Fetch dashboard statistics
+        const stats = await BusinessService.getDashboardStats();
+        setRevenueStats({
+          totalRevenue: stats.totalRevenue,
+          pendingPayments: stats.pendingPayments,
+          projectedRevenue: stats.projectedRevenue,
+        });
+
+        setBookingStats({
+          totalBookings: stats.totalBookings,
+          pendingRequests: stats.pendingRequests,
+          confirmedBookings: stats.confirmedBookings,
+        });
+
+        // Fetch occupancy chart data
+        const chartData = await BusinessService.getOccupancyChartData();
+        setOccupancyChartData(chartData);
+
+        // Fetch recent bookings
+        const bookings = await BusinessService.getRecentBookings(3);
+        setRecentBookings(bookings);
+      } catch (error) {
+        console.error("Error fetching dashboard data:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchDashboardData();
+  }, [router]);
+
+  // Loading state
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center min-h-screen" data-testid="dashboard-loading">
+        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-indigo-500"></div>
+      </div>
+    );
+  }
+
   return (
-    <div>
+    <div data-testid="business-dashboard">
       <h1 className="text-2xl font-bold text-gray-800 mb-6">Dashboard Overview</h1>
 
       {/* Revenue Statistics */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-        <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-100">
+        <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-100" data-testid="total-revenue-card">
           <h2 className="text-sm font-medium text-gray-500">Total Revenue</h2>
           <p className="text-2xl font-bold text-gray-800 mt-2">{revenueStats.totalRevenue}</p>
           <div className="mt-2 text-xs text-green-600">
@@ -62,7 +124,7 @@ export default function BusinessDashboardPage() {
           </div>
         </div>
 
-        <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-100">
+        <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-100" data-testid="pending-payments-card">
           <h2 className="text-sm font-medium text-gray-500">Pending Payments</h2>
           <p className="text-2xl font-bold text-gray-800 mt-2">{revenueStats.pendingPayments}</p>
           <div className="mt-2 text-xs text-amber-600">
@@ -84,7 +146,7 @@ export default function BusinessDashboardPage() {
           </div>
         </div>
 
-        <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-100">
+        <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-100" data-testid="projected-revenue-card">
           <h2 className="text-sm font-medium text-gray-500">Projected Annual Revenue</h2>
           <p className="text-2xl font-bold text-gray-800 mt-2">{revenueStats.projectedRevenue}</p>
           <div className="mt-2 text-xs text-indigo-600">
@@ -95,121 +157,120 @@ export default function BusinessDashboardPage() {
 
       {/* Occupancy and Booking Statistics */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
-        <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-100 lg:col-span-1">
+        <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-100 lg:col-span-1" data-testid="occupancy-chart">
           <h2 className="text-lg font-semibold text-gray-800 mb-4">Room Occupancy</h2>
-          <div className="flex justify-center">
-            <div className="w-48 h-48">
-              <Doughnut
-                data={occupancyChartData}
-                options={{
-                  cutout: "70%",
-                  plugins: {
-                    legend: {
-                      position: "bottom",
+          
+          {occupancyChartData.datasets[0].data[0] > 0 || occupancyChartData.datasets[0].data[1] > 0 ? (
+            <div className="flex justify-center">
+              <div className="w-48 h-48">
+                <Doughnut
+                  data={occupancyChartData}
+                  options={{
+                    cutout: "70%",
+                    plugins: {
+                      legend: {
+                        position: "bottom",
+                      },
                     },
-                  },
-                }}
-              />
+                  }}
+                />
+              </div>
             </div>
-          </div>
+          ) : (
+            <div className="flex justify-center items-center h-48 bg-gray-50 rounded">
+              <p className="text-gray-500">No occupancy data available</p>
+            </div>
+          )}
+
           <div className="mt-4 grid grid-cols-2 gap-2 text-center">
             <div className="bg-indigo-50 p-2 rounded">
               <p className="text-sm font-medium text-gray-500">Occupied</p>
-              <p className="text-xl font-semibold text-indigo-600">75%</p>
+              <p className="text-xl font-semibold text-indigo-600" data-testid="occupied-percent">
+                {occupancyChartData.datasets[0].data[0]}%
+              </p>
             </div>
             <div className="bg-gray-50 p-2 rounded">
               <p className="text-sm font-medium text-gray-500">Vacant</p>
-              <p className="text-xl font-semibold text-gray-600">25%</p>
+              <p className="text-xl font-semibold text-gray-600" data-testid="vacant-percent">
+                {occupancyChartData.datasets[0].data[1]}%
+              </p>
             </div>
           </div>
         </div>
 
-        <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-100 lg:col-span-2">
+        <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-100 lg:col-span-2" data-testid="booking-stats">
           <h2 className="text-lg font-semibold text-gray-800 mb-4">Booking Statistics</h2>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div className="bg-gray-50 p-4 rounded">
               <h3 className="text-sm font-medium text-gray-500">Total Bookings</h3>
-              <p className="text-2xl font-bold text-gray-800 mt-1">{bookingStats.totalBookings}</p>
+              <p className="text-2xl font-bold text-gray-800 mt-1" data-testid="total-bookings">{bookingStats.totalBookings}</p>
               <p className="text-xs text-gray-500 mt-1">For academic year 2024/2025</p>
             </div>
             <div className="bg-amber-50 p-4 rounded">
               <h3 className="text-sm font-medium text-amber-800">Pending Requests</h3>
-              <p className="text-2xl font-bold text-amber-700 mt-1">{bookingStats.pendingRequests}</p>
+              <p className="text-2xl font-bold text-amber-700 mt-1" data-testid="pending-requests">{bookingStats.pendingRequests}</p>
               <p className="text-xs text-amber-600 mt-1">Requires your attention</p>
             </div>
             <div className="bg-green-50 p-4 rounded">
               <h3 className="text-sm font-medium text-green-800">Confirmed Bookings</h3>
-              <p className="text-2xl font-bold text-green-700 mt-1">{bookingStats.confirmedBookings}</p>
+              <p className="text-2xl font-bold text-green-700 mt-1" data-testid="confirmed-bookings">{bookingStats.confirmedBookings}</p>
               <p className="text-xs text-green-600 mt-1">Successfully processed</p>
             </div>
           </div>
 
           <div className="mt-6">
             <h3 className="text-sm font-medium text-gray-500 mb-3">Recent Bookings</h3>
-            <div className="overflow-x-auto">
-              <table className="min-w-full divide-y divide-gray-200">
-                <thead className="bg-gray-50">
-                  <tr>
-                    <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Student
-                    </th>
-                    <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Property
-                    </th>
-                    <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Room Type
-                    </th>
-                    <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Status
-                    </th>
-                  </tr>
-                </thead>
-                <tbody className="bg-white divide-y divide-gray-200">
-                  {[
-                    {
-                      student: "Amara Okafor",
-                      property: "Green Meadows",
-                      roomType: "Single Room",
-                      status: "Confirmed",
-                    },
-                    {
-                      student: "Chidi Nwosu",
-                      property: "Sunlight Hostel",
-                      roomType: "Shared Room",
-                      status: "Pending",
-                    },
-                    {
-                      student: "Blessing Ade",
-                      property: "Green Meadows",
-                      roomType: "Ensuite",
-                      status: "Confirmed",
-                    },
-                  ].map((booking, index) => (
-                    <tr key={index}>
-                      <td className="px-3 py-2 whitespace-nowrap text-sm text-gray-900">
-                        {booking.student}
-                      </td>
-                      <td className="px-3 py-2 whitespace-nowrap text-sm text-gray-900">
-                        {booking.property}
-                      </td>
-                      <td className="px-3 py-2 whitespace-nowrap text-sm text-gray-900">
-                        {booking.roomType}
-                      </td>
-                      <td className="px-3 py-2 whitespace-nowrap text-sm">
-                        {booking.status === "Confirmed" ? (
-                          <span className="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">
-                            Confirmed
-                          </span>
-                        ) : (
-                          <span className="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-amber-100 text-amber-800">
-                            Pending
-                          </span>
-                        )}
-                      </td>
+            <div className="overflow-x-auto" data-testid="recent-bookings-table">
+              {recentBookings.length > 0 ? (
+                <table className="min-w-full divide-y divide-gray-200">
+                  <thead className="bg-gray-50">
+                    <tr>
+                      <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Student
+                      </th>
+                      <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Property
+                      </th>
+                      <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Date
+                      </th>
+                      <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Status
+                      </th>
                     </tr>
-                  ))}
-                </tbody>
-              </table>
+                  </thead>
+                  <tbody className="bg-white divide-y divide-gray-200">
+                    {recentBookings.map((booking, index) => (
+                      <tr key={booking.id} data-testid={`booking-row-${index}`}>
+                        <td className="px-3 py-2 whitespace-nowrap text-sm text-gray-900">
+                          {booking.studentName}
+                        </td>
+                        <td className="px-3 py-2 whitespace-nowrap text-sm text-gray-900">
+                          {booking.hostelName}
+                        </td>
+                        <td className="px-3 py-2 whitespace-nowrap text-sm text-gray-900">
+                          {booking.date}
+                        </td>
+                        <td className="px-3 py-2 whitespace-nowrap text-sm">
+                          {booking.status === "confirmed" ? (
+                            <span className="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">
+                              Confirmed
+                            </span>
+                          ) : (
+                            <span className="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-amber-100 text-amber-800">
+                              Pending
+                            </span>
+                          )}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              ) : (
+                <div className="text-center py-8 bg-gray-50 rounded">
+                  <p className="text-gray-500" data-testid="no-bookings-message">No recent bookings available</p>
+                </div>
+              )}
             </div>
           </div>
         </div>
@@ -217,7 +278,7 @@ export default function BusinessDashboardPage() {
 
       {/* Quick Actions */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <div className="bg-indigo-50 p-4 rounded-lg border border-indigo-100 flex items-center">
+        <div className="bg-indigo-50 p-4 rounded-lg border border-indigo-100 flex items-center" data-testid="add-property-action">
           <div className="bg-indigo-100 p-3 rounded-full mr-4">
             <svg
               xmlns="http://www.w3.org/2000/svg"
@@ -241,7 +302,7 @@ export default function BusinessDashboardPage() {
             </p>
           </div>
         </div>
-        <div className="bg-green-50 p-4 rounded-lg border border-green-100 flex items-center">
+        <div className="bg-green-50 p-4 rounded-lg border border-green-100 flex items-center" data-testid="process-payments-action">
           <div className="bg-green-100 p-3 rounded-full mr-4">
             <svg
               xmlns="http://www.w3.org/2000/svg"
@@ -263,7 +324,7 @@ export default function BusinessDashboardPage() {
             <p className="text-xs text-green-600 mt-1">Review pending payments</p>
           </div>
         </div>
-        <div className="bg-amber-50 p-4 rounded-lg border border-amber-100 flex items-center">
+        <div className="bg-amber-50 p-4 rounded-lg border border-amber-100 flex items-center" data-testid="booking-requests-action">
           <div className="bg-amber-100 p-3 rounded-full mr-4">
             <svg
               xmlns="http://www.w3.org/2000/svg"

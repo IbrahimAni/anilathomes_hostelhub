@@ -1,209 +1,89 @@
 "use client";
 
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { Tab } from '@headlessui/react';
+import { useRouter } from 'next/navigation';
+import { auth } from "@/config/firebase";
+import { BusinessService } from '@/services/business.service';
+import { RoomData, AgentCommissionData } from '@/types/business';
 import RoomOccupancy from '@/components/dashboard/business/RoomOccupancy';
 import AgentCommissions from '@/components/dashboard/business/AgentCommissions';
 
-// Mock data for room occupancy
-const mockRoomData = [
-  {
-    roomId: "room1",
-    roomNumber: "101",
-    roomType: "Single Room",
-    capacity: 1,
-    occupiedCount: 1,
-    occupants: [
-      {
-        id: "student1",
-        name: "John Doe",
-        leaseEnd: "2023-12-31",
-        paymentStatus: "paid" as const,
-        agentAssisted: true,
-        agentName: "Sarah Johnson"
-      }
-    ]
-  },
-  {
-    roomId: "room2",
-    roomNumber: "102",
-    roomType: "Double Room",
-    capacity: 2,
-    occupiedCount: 2,
-    occupants: [
-      {
-        id: "student2",
-        name: "Michael Brown",
-        leaseEnd: "2023-11-30",
-        paymentStatus: "paid" as const,
-        agentAssisted: false
-      },
-      {
-        id: "student3",
-        name: "Emma Wilson",
-        leaseEnd: "2024-01-15",
-        paymentStatus: "pending" as const,
-        agentAssisted: true,
-        agentName: "David Lee"
-      }
-    ]
-  },
-  {
-    roomId: "room3",
-    roomNumber: "103",
-    roomType: "Single Room",
-    capacity: 1,
-    occupiedCount: 0,
-    occupants: []
-  },
-  {
-    roomId: "room4",
-    roomNumber: "104",
-    roomType: "Single Room",
-    capacity: 1,
-    occupiedCount: 1,
-    occupants: [
-      {
-        id: "student4",
-        name: "James Smith",
-        leaseEnd: new Date(Date.now() + 15 * 24 * 60 * 60 * 1000).toISOString().split('T')[0], // 15 days from now
-        paymentStatus: "paid" as const,
-        agentAssisted: true,
-        agentName: "Sarah Johnson"
-      }
-    ]
-  },
-  {
-    roomId: "room5",
-    roomNumber: "105",
-    roomType: "Double Room",
-    capacity: 2,
-    occupiedCount: 1,
-    occupants: [
-      {
-        id: "student5",
-        name: "Olivia Davis",
-        leaseEnd: "2024-02-28",
-        paymentStatus: "overdue" as const,
-        agentAssisted: false
-      }
-    ]
-  }
-];
-
-// Mock data for agent commissions
-const mockAgentData = [
-  {
-    agentId: "agent1",
-    agentName: "Sarah Johnson",
-    profileImage: "https://randomuser.me/api/portraits/women/44.jpg",
-    totalCommission: 75000,
-    pendingCommission: 25000,
-    paidCommission: 50000,
-    bookingsCount: 3,
-    lastBookingDate: "2023-11-15",
-    bookings: [
-      {
-        id: "booking1",
-        hostelName: "Green Haven Hostel",
-        roomNumber: "101",
-        studentName: "John Doe",
-        bookingDate: "2023-10-05",
-        amount: 150000,
-        commissionAmount: 15000,
-        commissionStatus: "paid" as const
-      },
-      {
-        id: "booking2",
-        hostelName: "Green Haven Hostel",
-        roomNumber: "104",
-        studentName: "James Smith",
-        bookingDate: "2023-11-15",
-        amount: 150000,
-        commissionAmount: 15000,
-        commissionStatus: "paid" as const
-      },
-      {
-        id: "booking3",
-        hostelName: "Sunshine Towers",
-        roomNumber: "203",
-        studentName: "Linda Brown",
-        bookingDate: "2023-11-20",
-        amount: 250000,
-        commissionAmount: 25000,
-        commissionStatus: "pending" as const
-      }
-    ]
-  },
-  {
-    agentId: "agent2",
-    agentName: "David Lee",
-    profileImage: "https://randomuser.me/api/portraits/men/32.jpg",
-    totalCommission: 45000,
-    pendingCommission: 0,
-    paidCommission: 45000,
-    bookingsCount: 2,
-    lastBookingDate: "2023-10-20",
-    bookings: [
-      {
-        id: "booking4",
-        hostelName: "Green Haven Hostel",
-        roomNumber: "102",
-        studentName: "Emma Wilson",
-        bookingDate: "2023-09-15",
-        amount: 180000,
-        commissionAmount: 18000,
-        commissionStatus: "paid" as const
-      },
-      {
-        id: "booking5",
-        hostelName: "Campus View Hostel",
-        roomNumber: "307",
-        studentName: "Robert Garcia",
-        bookingDate: "2023-10-20",
-        amount: 270000,
-        commissionAmount: 27000,
-        commissionStatus: "paid" as const
-      }
-    ]
-  },
-  {
-    agentId: "agent3",
-    agentName: "Michelle Wong",
-    profileImage: "https://randomuser.me/api/portraits/women/63.jpg",
-    totalCommission: 34000,
-    pendingCommission: 34000,
-    paidCommission: 0,
-    bookingsCount: 1,
-    lastBookingDate: "2023-11-28",
-    bookings: [
-      {
-        id: "booking6",
-        hostelName: "Sunshine Towers",
-        roomNumber: "205",
-        studentName: "Daniel Martinez",
-        bookingDate: "2023-11-28",
-        amount: 340000,
-        commissionAmount: 34000,
-        commissionStatus: "pending" as const
-      }
-    ]
-  }
-];
-
 const PropertiesPage = () => {
-  // Property tabs are controlled by @headlessui/react Tab component
-  // so we don't need to maintain selected state manually
-  
-  // In a real app, this would come from API calls
-  const properties = [
-    { id: "property1", name: "Green Haven Hostel", location: "University of Lagos, Akoka" },
-    { id: "property2", name: "Sunshine Towers", location: "University of Ibadan, Ibadan" },
-    { id: "property3", name: "Campus View Hostel", location: "Obafemi Awolowo University, Ile-Ife" }
-  ];
+  const router = useRouter();
+  const [loading, setLoading] = useState(true);
+  const [properties, setProperties] = useState<{ id: string, name: string }[]>([]);
+  const [selectedProperty, setSelectedProperty] = useState<string | null>(null);
+  const [roomsData, setRoomsData] = useState<RoomData[]>([]);
+  const [agentsData, setAgentsData] = useState<AgentCommissionData[]>([]);
+
+  useEffect(() => {
+    const fetchProperties = async () => {
+      try {
+        // Check if user is authenticated
+        const currentUser = auth.currentUser;
+        if (!currentUser) {
+          router.push('/login');
+          return;
+        }
+
+        // Fetch properties owned by this business
+        const hostels = await BusinessService.getBusinessHostels();
+        setProperties(hostels);
+
+        // If there are properties, fetch data for the first one
+        if (hostels.length > 0) {
+          setSelectedProperty(hostels[0].id);
+          await fetchPropertyData(hostels[0].id);
+        }
+      } catch (error) {
+        console.error("Error fetching properties:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchProperties();
+  }, [router]);
+
+  // Function to fetch data for a selected property
+  const fetchPropertyData = async (propertyId: string) => {
+    try {
+      setLoading(true);
+      
+      // Fetch room occupancy data for the selected property
+      const rooms = await BusinessService.getRoomOccupancy(propertyId);
+      setRoomsData(rooms);
+      
+      // Fetch agent commission data
+      const agents = await BusinessService.getAgentCommissions();
+      setAgentsData(agents);
+    } catch (error) {
+      console.error(`Error fetching data for property ${propertyId}:`, error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Handle property tab change
+  const handleTabChange = async (index: number) => {
+    if (properties[index]) {
+      setSelectedProperty(properties[index].id);
+      await fetchPropertyData(properties[index].id);
+    }
+  };
 
   function classNames(...classes: string[]) {
     return classes.filter(Boolean).join(' ');
+  }
+
+  // Loading state
+  if (loading && properties.length === 0) {
+    return (
+      <div className="flex items-center justify-center min-h-screen" data-testid="properties-loading">
+        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-indigo-500"></div>
+      </div>
+    );
   }
 
   return (
@@ -213,95 +93,197 @@ const PropertiesPage = () => {
         <p className="text-gray-600">Manage your hostels, track room occupancy, and monitor agent commissions.</p>
       </div>
 
-      <div className="bg-white rounded-lg shadow mb-8">
-        <div className="p-6 border-b border-gray-200">
-          <div className="flex items-center justify-between">
-            <h2 className="text-xl font-bold text-gray-900">Your Properties</h2>
-            <button 
-              className="text-sm bg-indigo-600 text-white py-2 px-4 rounded-md hover:bg-indigo-700 transition-colors flex items-center"
-              data-testid="add-property-button"
-              aria-label="Add new property"
-            >
-              <i className="fas fa-plus mr-2" aria-hidden="true"></i> Add Property
-            </button>
+      {properties.length > 0 ? (
+        <div className="bg-white rounded-lg shadow mb-8">
+          <div className="p-6 border-b border-gray-200">
+            <div className="flex items-center justify-between">
+              <h2 className="text-xl font-bold text-gray-900">Your Properties</h2>
+              <button 
+                className="text-sm bg-indigo-600 text-white py-2 px-4 rounded-md hover:bg-indigo-700 transition-colors flex items-center"
+                data-testid="add-property-button"
+                aria-label="Add new property"
+              >
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  className="h-4 w-4 mr-2"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M12 6v6m0 0v6m0-6h6m-6 0H6"
+                  />
+                </svg>
+                Add Property
+              </button>
+            </div>
           </div>
-        </div>
-        
-        <div className="p-4">
-          <Tab.Group>
-            <Tab.List className="flex space-x-1 rounded-xl bg-indigo-50 p-1">
-              {properties.map((property) => (
-                <Tab
-                  key={property.id}
-                  className={({ selected }) =>
-                    classNames(
-                      'w-full rounded-lg py-2.5 text-sm font-medium leading-5',
-                      'focus:outline-none focus:ring-2 ring-offset-2 ring-offset-indigo-400 ring-white ring-opacity-60',
-                      selected
-                        ? 'bg-white text-indigo-700 shadow'
-                        : 'text-gray-600 hover:bg-white/[0.12] hover:text-indigo-600'
-                    )
-                  }
-                  data-testid={`property-tab-${property.id}`}
-                >
-                  {property.name}
-                </Tab>
-              ))}
-            </Tab.List>
-            <Tab.Panels className="mt-4">
-              {properties.map((property) => (
-                <Tab.Panel
-                  key={property.id}
-                  className={classNames(
-                    'rounded-xl p-3',
-                    'focus:outline-none'
-                  )}
-                >
-                  <div className="bg-indigo-50 p-4 rounded-lg mb-4">
-                    <div className="flex flex-col md:flex-row justify-between">
-                      <div>
-                        <h3 className="text-lg font-medium text-gray-900">{property.name}</h3>
-                        <p className="text-sm text-gray-600">{property.location}</p>
-                      </div>
-                      <div className="mt-4 md:mt-0 space-x-2">
-                        <button 
-                          className="text-sm bg-white border border-gray-300 text-gray-700 py-1 px-3 rounded hover:bg-gray-50 transition-colors"
-                          data-testid={`edit-property-${property.id}`}
-                        >
-                          <i className="fas fa-edit mr-1" aria-hidden="true"></i> Edit
-                        </button>
-                        <button 
-                          className="text-sm bg-white border border-gray-300 text-gray-700 py-1 px-3 rounded hover:bg-gray-50 transition-colors"
-                          data-testid={`view-details-${property.id}`}
-                        >
-                          <i className="fas fa-eye mr-1" aria-hidden="true"></i> Details
-                        </button>
+          
+          <div className="p-4">
+            <Tab.Group onChange={handleTabChange}>
+              <Tab.List className="flex space-x-1 rounded-xl bg-indigo-50 p-1">
+                {properties.map((property) => (
+                  <Tab
+                    key={property.id}
+                    className={({ selected }) =>
+                      classNames(
+                        'w-full rounded-lg py-2.5 text-sm font-medium leading-5',
+                        'focus:outline-none focus:ring-2 ring-offset-2 ring-offset-indigo-400 ring-white ring-opacity-60',
+                        selected
+                          ? 'bg-white text-indigo-700 shadow'
+                          : 'text-gray-600 hover:bg-white/[0.12] hover:text-indigo-600'
+                      )
+                    }
+                    data-testid={`property-tab-${property.id}`}
+                  >
+                    {property.name}
+                  </Tab>
+                ))}
+              </Tab.List>
+              <Tab.Panels className="mt-4">
+                {properties.map((property) => (
+                  <Tab.Panel
+                    key={property.id}
+                    className={classNames(
+                      'rounded-xl p-3',
+                      'focus:outline-none'
+                    )}
+                  >
+                    <div className="bg-indigo-50 p-4 rounded-lg mb-4">
+                      <div className="flex flex-col md:flex-row justify-between">
+                        <div>
+                          <h3 className="text-lg font-medium text-gray-900">{property.name}</h3>
+                          {/* Location data would come from the API in a real implementation */}
+                          <p className="text-sm text-gray-600">Location information would be shown here</p>
+                        </div>
+                        <div className="mt-4 md:mt-0 space-x-2">
+                          <button 
+                            className="text-sm bg-white border border-gray-300 text-gray-700 py-1 px-3 rounded hover:bg-gray-50 transition-colors"
+                            data-testid={`edit-property-${property.id}`}
+                          >
+                            <svg
+                              xmlns="http://www.w3.org/2000/svg"
+                              className="h-4 w-4 inline mr-1"
+                              fill="none"
+                              viewBox="0 0 24 24"
+                              stroke="currentColor"
+                            >
+                              <path
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                strokeWidth={2}
+                                d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
+                              />
+                            </svg>
+                            Edit
+                          </button>
+                          <button 
+                            className="text-sm bg-white border border-gray-300 text-gray-700 py-1 px-3 rounded hover:bg-gray-50 transition-colors"
+                            data-testid={`view-details-${property.id}`}
+                          >
+                            <svg
+                              xmlns="http://www.w3.org/2000/svg"
+                              className="h-4 w-4 inline mr-1"
+                              fill="none"
+                              viewBox="0 0 24 24"
+                              stroke="currentColor"
+                            >
+                              <path
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                strokeWidth={2}
+                                d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"
+                              />
+                              <path
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                strokeWidth={2}
+                                d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"
+                              />
+                            </svg>
+                            Details
+                          </button>
+                        </div>
                       </div>
                     </div>
-                  </div>
 
-                  {/* Room occupancy for the selected property */}
-                  <div className="mb-8">
-                    <RoomOccupancy 
-                      hostelName={property.name}
-                      rooms={mockRoomData}
-                      testId={`room-occupancy-${property.id}`}
-                    />
-                  </div>
+                    {/* Room occupancy section with loading state */}
+                    <div className="mb-8">
+                      {loading && property.id === selectedProperty ? (
+                        <div className="bg-white p-6 rounded-lg shadow flex items-center justify-center h-60" data-testid="room-occupancy-loading">
+                          <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-indigo-500"></div>
+                        </div>
+                      ) : roomsData.length > 0 ? (
+                        <RoomOccupancy 
+                          hostelName={property.name}
+                          rooms={roomsData}
+                          testId={`room-occupancy-${property.id}`}
+                        />
+                      ) : (
+                        <div className="bg-white p-6 rounded-lg shadow text-center" data-testid="no-rooms-message">
+                          <p className="text-gray-500 mb-4">No rooms found for this property</p>
+                          <button 
+                            className="text-sm bg-indigo-600 text-white py-2 px-4 rounded-md hover:bg-indigo-700 transition-colors"
+                            data-testid="add-rooms-button"
+                          >
+                            Add Rooms
+                          </button>
+                        </div>
+                      )}
+                    </div>
 
-                  {/* Agent commissions for the selected property */}
-                  <div className="mb-4">
-                    <AgentCommissions 
-                      agents={mockAgentData}
-                      testId={`agent-commissions-${property.id}`}
-                    />
-                  </div>
-                </Tab.Panel>
-              ))}
-            </Tab.Panels>
-          </Tab.Group>
+                    {/* Agent commissions section with loading state */}
+                    <div className="mb-4">
+                      {loading && property.id === selectedProperty ? (
+                        <div className="bg-white p-6 rounded-lg shadow flex items-center justify-center h-60" data-testid="agent-commissions-loading">
+                          <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-indigo-500"></div>
+                        </div>
+                      ) : agentsData.length > 0 ? (
+                        <AgentCommissions 
+                          agents={agentsData}
+                          testId={`agent-commissions-${property.id}`}
+                        />
+                      ) : (
+                        <div className="bg-white p-6 rounded-lg shadow text-center" data-testid="no-agents-message">
+                          <p className="text-gray-500">No agent commissions found for this property</p>
+                        </div>
+                      )}
+                    </div>
+                  </Tab.Panel>
+                ))}
+              </Tab.Panels>
+            </Tab.Group>
+          </div>
         </div>
-      </div>
+      ) : (
+        <div className="bg-white p-8 rounded-lg shadow text-center" data-testid="no-properties-message">
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            className="h-16 w-16 text-gray-400 mx-auto mb-4"
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke="currentColor"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth={1}
+              d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"
+            />
+          </svg>
+          <h2 className="text-xl font-semibold text-gray-700 mb-2">No Properties Found</h2>
+          <p className="text-gray-500 mb-6">You don&apos;t have any properties registered in the system yet.</p>
+          <button 
+            className="bg-indigo-600 text-white py-2 px-6 rounded-md hover:bg-indigo-700 transition-colors"
+            data-testid="add-first-property-button"
+          >
+            Add Your First Property
+          </button>
+        </div>
+      )}
     </div>
   );
 };

@@ -2,6 +2,13 @@ rules_version = '2';
 
 service cloud.firestore {
   match /databases/{database}/documents {
+    // Check if user is a business owner
+    function isBusinessUser() {
+      return request.auth != null && 
+        exists(/databases/$(database)/documents/users/$(request.auth.uid)) &&
+        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == "business";
+    }
+
     // Allow users to read and write only their own data
     match /users/{userId} {
       allow create: if request.auth != null;
@@ -30,6 +37,8 @@ service cloud.firestore {
     // Allow users to access hostels (read-only)
     match /hostels/{hostelId} {
       allow read: if request.auth != null;
+      // Allow business users to read/write hostels they own
+      allow write: if isBusinessUser() && request.resource.data.businessId == request.auth.uid;
     }
     
     // Allow users to manage their favorite hostels
@@ -40,9 +49,45 @@ service cloud.firestore {
     
     // Allow users to access their own bookings
     match /bookings/{bookingId} {
-      allow read: if request.auth != null && resource.data.userId == request.auth.uid;
+      allow read: if request.auth != null && (
+        resource.data.userId == request.auth.uid || 
+        resource.data.businessId == request.auth.uid
+      );
       allow create: if request.auth != null && request.resource.data.userId == request.auth.uid;
-      allow update: if request.auth != null && resource.data.userId == request.auth.uid;
+      allow update: if request.auth != null && (
+        resource.data.userId == request.auth.uid || 
+        resource.data.businessId == request.auth.uid
+      );
+    }
+    
+    // Allow business users to access their business stats
+    match /businessStats/{businessId} {
+      allow read: if request.auth != null && request.auth.uid == businessId;
+      allow write: if request.auth != null && request.auth.uid == businessId;
+    }
+    
+    // Allow business users to access rooms in their properties
+    match /rooms/{roomId} {
+      allow read: if request.auth != null;
+      allow write: if isBusinessUser() && request.resource.data.businessId == request.auth.uid;
+    }
+    
+    // Allow business users to access occupants in their properties
+    match /occupants/{occupantId} {
+      allow read: if request.auth != null && (
+        resource.data.userId == request.auth.uid || 
+        resource.data.businessId == request.auth.uid
+      );
+      allow write: if isBusinessUser() && request.resource.data.businessId == request.auth.uid;
+    }
+    
+    // Allow business users to access agents that work with them
+    match /agents/{agentId} {
+      allow read: if request.auth != null && (
+        resource.data.agentId == request.auth.uid || 
+        resource.data.businessIds[request.auth.uid] == true ||
+        resource.data.businessIds is list && request.auth.uid in resource.data.businessIds
+      );
     }
     
     // Default deny for all other collections
