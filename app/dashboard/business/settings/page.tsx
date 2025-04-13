@@ -8,7 +8,8 @@ import { UserProfile } from '@/types/user';
 export default function BusinessSettingsPage() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
-  const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
+  // Remove the unused variable completely
+  const [, setUserProfile] = useState<UserProfile | null>(null);
   const [successMessage, setSuccessMessage] = useState('');
   const [errorMessage, setErrorMessage] = useState('');
   
@@ -81,7 +82,7 @@ export default function BusinessSettingsPage() {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center min-h-[70vh]">
+      <div className="flex items-center justify-center min-h-[70vh]" data-testid="loading-spinner">
         <div className="w-8 h-8 border-t-2 border-indigo-600 rounded-full animate-spin"></div>
         <span className="ml-2 text-gray-600">Loading settings...</span>
       </div>
@@ -89,7 +90,7 @@ export default function BusinessSettingsPage() {
   }
 
   return (
-    <div className="max-w-4xl mx-auto">
+    <div className="max-w-4xl mx-auto" data-testid="business-settings-page">
       <div className="bg-white shadow-md rounded-lg overflow-hidden">
         <div className="px-6 py-5 border-b border-gray-200">
           <h2 className="text-xl font-semibold text-gray-800">Business Preferences</h2>
@@ -98,15 +99,15 @@ export default function BusinessSettingsPage() {
           </p>
         </div>
 
-        <form onSubmit={handleSubmit} className="p-6 space-y-6">
+        <form onSubmit={handleSubmit} className="p-6 space-y-6" data-testid="settings-form">
           {successMessage && (
-            <div className="bg-green-50 border border-green-200 text-green-700 px-4 py-3 rounded relative" role="alert">
+            <div className="bg-green-50 border border-green-200 text-green-700 px-4 py-3 rounded relative" role="alert" data-testid="success-message">
               {successMessage}
             </div>
           )}
           
           {errorMessage && (
-            <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded relative" role="alert">
+            <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded relative" role="alert" data-testid="error-message">
               {errorMessage}
             </div>
           )}
@@ -126,6 +127,7 @@ export default function BusinessSettingsPage() {
                 value={defaultCommissionRate}
                 onChange={(e) => setDefaultCommissionRate(Number(e.target.value))}
                 className="w-32 px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
+                data-testid="commission-rate-input"
               />
               <p className="mt-1 text-xs text-gray-500">
                 Default percentage agents will earn from successful bookings
@@ -145,6 +147,7 @@ export default function BusinessSettingsPage() {
                   value={defaultCurrency}
                   onChange={(e) => setDefaultCurrency(e.target.value)}
                   className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
+                  data-testid="currency-select"
                 >
                   <option value="NGN">Nigerian Naira (₦)</option>
                   <option value="USD">US Dollar ($)</option>
@@ -166,6 +169,7 @@ export default function BusinessSettingsPage() {
                   value={taxRate}
                   onChange={(e) => setTaxRate(Number(e.target.value))}
                   className="w-32 px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
+                  data-testid="tax-rate-input"
                 />
                 <p className="mt-1 text-xs text-gray-500">
                   Applied to invoices (use 0 for tax exempt)
@@ -185,6 +189,7 @@ export default function BusinessSettingsPage() {
                     checked={autoApproveBookings}
                     onChange={(e) => setAutoApproveBookings(e.target.checked)}
                     className="h-4 w-4 text-indigo-600 border-gray-300 rounded focus:ring-indigo-500"
+                    data-testid="auto-approve-checkbox"
                   />
                 </div>
                 <div className="ml-3 text-sm">
@@ -206,6 +211,7 @@ export default function BusinessSettingsPage() {
                     checked={enableEmailNotifications}
                     onChange={(e) => setEnableEmailNotifications(e.target.checked)}
                     className="h-4 w-4 text-indigo-600 border-gray-300 rounded focus:ring-indigo-500"
+                    data-testid="email-notifications-checkbox"
                   />
                 </div>
                 <div className="ml-3 text-sm">
@@ -222,6 +228,7 @@ export default function BusinessSettingsPage() {
                     checked={enableSmsNotifications}
                     onChange={(e) => setEnableSmsNotifications(e.target.checked)}
                     className="h-4 w-4 text-indigo-600 border-gray-300 rounded focus:ring-indigo-500"
+                    data-testid="sms-notifications-checkbox"
                   />
                 </div>
                 <div className="ml-3 text-sm">
@@ -238,6 +245,7 @@ export default function BusinessSettingsPage() {
                     checked={paymentReminders}
                     onChange={(e) => setPaymentReminders(e.target.checked)}
                     className="h-4 w-4 text-indigo-600 border-gray-300 rounded focus:ring-indigo-500"
+                    data-testid="payment-reminders-checkbox"
                   />
                 </div>
                 <div className="ml-3 text-sm">
@@ -253,6 +261,7 @@ export default function BusinessSettingsPage() {
               type="submit"
               disabled={saving}
               className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-50"
+              data-testid="save-button"
             >
               {saving ? (
                 <>

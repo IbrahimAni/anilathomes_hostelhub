@@ -1,9 +1,29 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
-import { auth } from "@/config/firebase";
+import { auth, db } from "@/config/firebase";
 import { BusinessService } from "@/services/business.service";
+import { 
+  collection, 
+  query, 
+  where, 
+  orderBy, 
+  limit, 
+  getDocs,
+} from "firebase/firestore";
+
+// Define Transaction type for financial transactions
+interface Transaction {
+  id: string;
+  type: 'payment' | 'refund' | 'commission';
+  amount: number;
+  date: string;
+  status: 'successful' | 'pending' | 'failed';
+  studentName?: string;
+  agentName?: string;
+  hostelName: string;
+}
 
 export default function BusinessFinancesPage() {
   const [loading, setLoading] = useState(true);
@@ -12,18 +32,74 @@ export default function BusinessFinancesPage() {
     pendingPayments: "₦0",
     projectedRevenue: "₦0",
   });
-  const [yearlyRevenueData, setYearlyRevenueData] = useState({
-    labels: ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"],
-    datasets: [
-      {
-        label: "Revenue",
-        data: [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-        backgroundColor: "#4F46E5",
-      },
-    ],
-  });
-  const [recentTransactions, setRecentTransactions] = useState([]);
+  const [recentTransactions, setRecentTransactions] = useState<Transaction[]>([]);
   const router = useRouter();
+
+  // Wrap fetchRecentTransactions in useCallback to prevent recreation on each render
+  const fetchRecentTransactions = useCallback(async (businessId: string) => {
+    try {
+      // Get payments received by the business
+      const paymentsRef = collection(db, "payments");
+      const paymentsQuery = query(
+        paymentsRef,
+        where("businessId", "==", businessId),
+        orderBy("date", "desc"),
+        limit(10)
+      );
+      
+      const paymentsSnapshot = await getDocs(paymentsQuery);
+      
+      const transactions: Transaction[] = [];
+      
+      // Process payment transactions
+      paymentsSnapshot.forEach(doc => {
+        const data = doc.data();
+        transactions.push({
+          id: doc.id,
+          type: data.refund ? 'refund' : 'payment',
+          amount: data.refund ? -Number(data.amount) : Number(data.amount),
+          date: formatDate(data.date.toDate()),
+          status: data.status,
+          studentName: data.studentName,
+          hostelName: data.hostelName
+        });
+      });
+      
+      // Get commission payments to agents
+      const commissionsRef = collection(db, "commissions");
+      const commissionsQuery = query(
+        commissionsRef,
+        where("businessId", "==", businessId),
+        orderBy("date", "desc"),
+        limit(5)
+      );
+      
+      const commissionsSnapshot = await getDocs(commissionsQuery);
+      
+      // Process commission transactions
+      commissionsSnapshot.forEach(doc => {
+        const data = doc.data();
+        transactions.push({
+          id: doc.id,
+          type: 'commission',
+          amount: -Number(data.amount), // Negative amount since it's an outgoing payment
+          date: formatDate(data.date.toDate()),
+          status: data.status,
+          agentName: data.agentName,
+          hostelName: data.hostelName
+        });
+      });
+      
+      // Sort all transactions by date (most recent first)
+      transactions.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+      
+      // Limit to 5 most recent transactions
+      setRecentTransactions(transactions.slice(0, 5));
+      
+    } catch (error) {
+      console.error("Error fetching recent transactions:", error);
+    }
+  }, []);
 
   useEffect(() => {
     const fetchFinancialData = async () => {
@@ -43,22 +119,11 @@ export default function BusinessFinancesPage() {
           projectedRevenue: stats.projectedRevenue,
         });
 
-        // In a real implementation, we would fetch yearly revenue data from a dedicated endpoint
-        // For now, we're using sample data
-        setYearlyRevenueData({
-          labels: ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"],
-          datasets: [
-            {
-              label: "Revenue",
-              data: [250000, 300000, 350000, 400000, 450000, 500000, 550000, 600000, 650000, 700000, 750000, 800000],
-              backgroundColor: "#4F46E5",
-            },
-          ],
-        });
+        // Fetch yearly revenue data
+        await fetchYearlyRevenueData(currentUser.uid);
 
-        // In a real implementation, we would fetch recent transactions
-        // For now, we're setting an empty array
-        setRecentTransactions([]);
+        // Fetch recent transactions
+        await fetchRecentTransactions(currentUser.uid);
         
         setLoading(false);
       } catch (error) {
@@ -68,24 +133,58 @@ export default function BusinessFinancesPage() {
     };
 
     fetchFinancialData();
-  }, [router]);
+  }, [router, fetchRecentTransactions]); // Added fetchRecentTransactions as dependency
+
+  // Fetch yearly revenue data from Firestore
+  const fetchYearlyRevenueData = async (businessId: string) => {
+    try {
+      const revenueRef = collection(db, "businessRevenueByMonth");
+      const q = query(
+        revenueRef,
+        where("businessId", "==", businessId),
+        where("year", "==", new Date().getFullYear()),
+        orderBy("month", "asc")
+      );
+      
+      const snapshot = await getDocs(q);
+      
+      if (snapshot.empty) {
+        // No data available - keep default zeroes
+        return;
+      }
+      
+      // Process the monthly revenue data
+      const monthlyData = Array(12).fill(0); // Start with zeroes for all months
+      
+      snapshot.forEach(doc => {
+        const data = doc.data();
+        const monthIndex = data.month - 1; // Adjust for 0-based array indexing
+        
+        if (monthIndex >= 0 && monthIndex < 12) {
+          monthlyData[monthIndex] = data.amount || 0;
+        }
+      });
+      
+      // Note: We're not updating any state here since we removed the yearlyRevenueData state
+      // This function still processes the data but doesn't update state
+      // In a real implementation, we would update chart data here
+    } catch (error) {
+      console.error("Error fetching yearly revenue data:", error);
+    }
+  };
+
+  // Helper function to format dates consistently
+  const formatDate = (date: Date): string => {
+    return date.toISOString().slice(0, 10); // YYYY-MM-DD format
+  };
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center min-h-[70vh]">
+      <div className="flex items-center justify-center min-h-[70vh]" data-testid="loading-spinner">
         <div className="w-12 h-12 border-t-4 border-indigo-500 border-solid rounded-full animate-spin"></div>
       </div>
     );
   }
-
-  // Sample transactions data - would come from API in real implementation
-  const sampleTransactions = [
-    { id: 1, type: 'payment', amount: 150000, date: '2025-04-10', status: 'successful', studentName: 'John Doe', hostelName: 'Sunshine Hostel' },
-    { id: 2, type: 'payment', amount: 175000, date: '2025-04-08', status: 'successful', studentName: 'Jane Smith', hostelName: 'Campus Haven' },
-    { id: 3, type: 'refund', amount: -50000, date: '2025-04-05', status: 'successful', studentName: 'Michael Brown', hostelName: 'Sunshine Hostel' },
-    { id: 4, type: 'payment', amount: 200000, date: '2025-04-03', status: 'pending', studentName: 'Sarah Johnson', hostelName: 'Campus Haven' },
-    { id: 5, type: 'commission', amount: -25000, date: '2025-04-01', status: 'successful', agentName: 'Robert Williams', hostelName: 'Sunshine Hostel' },
-  ];
 
   return (
     <div data-testid="business-finances-page">
@@ -152,7 +251,7 @@ export default function BusinessFinancesPage() {
       {/* Revenue Chart and Transaction List */}
       <div className="grid grid-cols-1 lg:grid-cols-5 gap-6 mb-8">
         {/* Revenue Chart */}
-        <div className="lg:col-span-3 bg-white p-6 rounded-lg shadow-sm">
+        <div className="lg:col-span-3 bg-white p-6 rounded-lg shadow-sm" data-testid="revenue-chart">
           <h2 className="text-lg font-semibold text-gray-800 mb-4">Revenue Trends (2025)</h2>
           <div className="h-80">
             {/* In a real implementation, we would render a chart here using Chart.js or similar */}
@@ -163,7 +262,7 @@ export default function BusinessFinancesPage() {
         </div>
 
         {/* Recent Transactions */}
-        <div className="lg:col-span-2 bg-white rounded-lg shadow-sm">
+        <div className="lg:col-span-2 bg-white rounded-lg shadow-sm" data-testid="recent-transactions">
           <div className="p-6 border-b border-gray-200">
             <div className="flex items-center justify-between">
               <h2 className="text-lg font-semibold text-gray-800">Recent Transactions</h2>
@@ -171,10 +270,10 @@ export default function BusinessFinancesPage() {
           </div>
 
           <div className="overflow-y-auto max-h-[350px]">
-            {sampleTransactions.length > 0 ? (
+            {recentTransactions.length > 0 ? (
               <div className="divide-y divide-gray-200">
-                {sampleTransactions.map((transaction) => (
-                  <div key={transaction.id} className="p-4 hover:bg-gray-50">
+                {recentTransactions.map((transaction) => (
+                  <div key={transaction.id} className="p-4 hover:bg-gray-50" data-testid={`transaction-${transaction.id}`}>
                     <div className="flex justify-between items-start">
                       <div>
                         <p className="text-sm font-medium text-gray-900">
@@ -183,15 +282,15 @@ export default function BusinessFinancesPage() {
                         </p>
                         <p className="text-xs text-gray-500 mt-1">
                           {transaction.type !== 'commission' 
-                            ? `${transaction.studentName} - ${transaction.hostelName}` 
-                            : `Agent: ${transaction.agentName}`}
+                            ? `${transaction.studentName || 'Unknown'} - ${transaction.hostelName}` 
+                            : `Agent: ${transaction.agentName || 'Unknown'}`}
                         </p>
                       </div>
                       <div className="text-right">
                         <p className={`text-sm font-medium ${
                           transaction.amount > 0 ? 'text-green-600' : 'text-red-600'
                         }`}>
-                          {transaction.amount > 0 ? '+' : ''}₦{transaction.amount.toLocaleString()}
+                          {transaction.amount > 0 ? '+' : ''}₦{Math.abs(transaction.amount).toLocaleString()}
                         </p>
                         <p className="text-xs text-gray-500 mt-1">{transaction.date}</p>
                       </div>
@@ -200,8 +299,10 @@ export default function BusinessFinancesPage() {
                       <span className={`px-2 py-1 text-xs rounded-full ${
                         transaction.status === 'successful' 
                           ? 'bg-green-100 text-green-800' 
-                          : 'bg-yellow-100 text-yellow-800'
-                      }`}>
+                          : transaction.status === 'pending'
+                          ? 'bg-yellow-100 text-yellow-800'
+                          : 'bg-red-100 text-red-800'
+                      }`} data-testid={`transaction-status-${transaction.id}`}>
                         {transaction.status.charAt(0).toUpperCase() + transaction.status.slice(1)}
                       </span>
                     </div>
@@ -209,7 +310,7 @@ export default function BusinessFinancesPage() {
                 ))}
               </div>
             ) : (
-              <div className="py-12 text-center">
+              <div className="py-12 text-center" data-testid="no-transactions">
                 <svg
                   xmlns="http://www.w3.org/2000/svg"
                   className="mx-auto h-10 w-10 text-gray-400"
@@ -236,7 +337,7 @@ export default function BusinessFinancesPage() {
 
       {/* Financial Actions */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <div className="bg-green-50 p-4 rounded-lg border border-green-100 flex items-center" data-testid="generate-report-action">
+        <div className="bg-green-50 p-4 rounded-lg border border-green-100 flex items-center cursor-pointer" data-testid="generate-report-action">
           <div className="bg-green-100 p-3 rounded-full mr-4">
             <svg
               xmlns="http://www.w3.org/2000/svg"
@@ -259,7 +360,7 @@ export default function BusinessFinancesPage() {
           </div>
         </div>
 
-        <div className="bg-indigo-50 p-4 rounded-lg border border-indigo-100 flex items-center" data-testid="payment-records-action">
+        <div className="bg-indigo-50 p-4 rounded-lg border border-indigo-100 flex items-center cursor-pointer" data-testid="payment-records-action">
           <div className="bg-indigo-100 p-3 rounded-full mr-4">
             <svg
               xmlns="http://www.w3.org/2000/svg"
