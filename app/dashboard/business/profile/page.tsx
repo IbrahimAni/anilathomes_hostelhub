@@ -7,6 +7,7 @@ import { UserService } from "@/services/user.service";
 import { useBusinessContext } from "@/context/BusinessContext";
 import { UserProfile } from "@/types/user";
 import Image from "next/image";
+import ConfirmationModal from "@/components/common/ConfirmationModal";
 
 export default function BusinessProfilePage() {
   const [loading, setLoading] = useState(true);
@@ -14,6 +15,7 @@ export default function BusinessProfilePage() {
   const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
   const [successMessage, setSuccessMessage] = useState('');
   const [errorMessage, setErrorMessage] = useState('');
+  const [isResetModalOpen, setIsResetModalOpen] = useState(false);
   const { updateBusinessName } = useBusinessContext();
   const router = useRouter();
 
@@ -59,13 +61,13 @@ export default function BusinessProfilePage() {
           setBusinessEmail(profile.businessEmail || '');
           setBusinessWebsite(profile.businessWebsite || '');
           
-          // Additional fields - in a real implementation, these would come from the profile too
-          setRegistrationNumber('BN-1234567');
-          setBusinessType('Hostel/Accommodation');
-          setCity('Lagos');
-          setState('Lagos State');
-          setContactPerson('John Doe');
-          setFoundedYear('2020');
+          // Additional fields from profile
+          setRegistrationNumber(profile.registrationNumber || 'BN-1234567');
+          setBusinessType(profile.businessType || 'Hostel/Accommodation');
+          setCity(profile.city || 'Lagos');
+          setState(profile.state || 'Lagos State');
+          setContactPerson(profile.contactPerson || 'John Doe');
+          setFoundedYear(profile.foundedYear || '2020');
         }
 
         setLoading(false);
@@ -88,14 +90,21 @@ export default function BusinessProfilePage() {
     try {
       const user = auth.currentUser;
       if (user && userProfile) {
-        const updatedProfile = {
+        const updatedProfile: Partial<UserProfile> = {
           ...userProfile,
           businessName,
           businessDescription,
           businessAddress,
           businessPhone,
           businessEmail,
-          businessWebsite
+          businessWebsite,
+          registrationNumber,
+          businessType,
+          city,
+          state,
+          contactPerson,
+          foundedYear,
+          profileComplete: true
         };
         
         await UserService.updateUserProfile(user.uid, updatedProfile);
@@ -114,6 +123,11 @@ export default function BusinessProfilePage() {
     }
   };
 
+  // Handle profile reset confirmation
+  const handleResetProfile = () => {
+    router.push('/dashboard/business/profile-setup');
+  };
+
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-[70vh]">
@@ -124,10 +138,44 @@ export default function BusinessProfilePage() {
 
   return (
     <div data-testid="business-profile-page">
-      <div className="mb-8">
-        <h1 className="text-2xl font-bold text-gray-900 mb-2">Business Profile</h1>
-        <p className="text-gray-600">Manage your business information, settings, and preferences.</p>
+      <div className="mb-8 flex items-center justify-between">
+        <div>
+          <h1 className="text-2xl font-bold text-gray-900 mb-2">Business Profile</h1>
+          <p className="text-gray-600">Manage your business information, settings, and preferences.</p>
+        </div>
+        <button
+          onClick={() => setIsResetModalOpen(true)}
+          className="inline-flex items-center justify-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-indigo-700 bg-indigo-100 hover:bg-indigo-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+        >
+          <svg 
+            xmlns="http://www.w3.org/2000/svg" 
+            className="h-4 w-4 mr-2" 
+            fill="none" 
+            viewBox="0 0 24 24" 
+            stroke="currentColor"
+          >
+            <path 
+              strokeLinecap="round" 
+              strokeLinejoin="round" 
+              strokeWidth={2} 
+              d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" 
+            />
+          </svg>
+          Reset Profile
+        </button>
       </div>
+
+      {/* Confirmation Modal for Profile Reset */}
+      <ConfirmationModal
+        isOpen={isResetModalOpen}
+        onClose={() => setIsResetModalOpen(false)}
+        onConfirm={handleResetProfile}
+        title="Reset Business Profile?"
+        message="Are you sure you want to reset your business profile? This will take you to the profile setup page where you can set up your profile from scratch. Your existing data will be preserved until you submit the new profile."
+        confirmButtonText="Yes, Reset Profile"
+        cancelButtonText="Cancel"
+        confirmButtonColor="red"
+      />
 
       {successMessage && (
         <div className="bg-green-50 rounded-lg p-4 mb-6 flex items-center shadow-sm border border-green-200" role="alert">
@@ -171,6 +219,7 @@ export default function BusinessProfilePage() {
         </div>
       )}
 
+      {/* Profile Summary and Form - Remaining code unchanged */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Profile Summary Card */}
         <div className="lg:col-span-1">

@@ -23,6 +23,14 @@ export interface UserProfile {
   businessPhone?: string;
   businessEmail?: string;
   businessWebsite?: string;
+  // Additional business profile fields
+  registrationNumber?: string;
+  businessType?: string;
+  city?: string;
+  state?: string;
+  contactPerson?: string;
+  foundedYear?: string;
+  profileComplete?: boolean;
   // Added business settings fields
   defaultCommissionRate?: number;
   enableEmailNotifications?: boolean;
