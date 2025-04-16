@@ -9,7 +9,8 @@ import {
   doc, 
   getDoc,
   Timestamp,
-  DocumentData
+  DocumentData,
+  addDoc
 } from "firebase/firestore";
 import { 
   BookingData, 
@@ -19,6 +20,8 @@ import {
   RoomOccupant,
   AgentBooking
 } from "@/types/business";
+// Add Firebase Storage imports
+import { getStorage, ref as storageRef, uploadBytes, getDownloadURL } from "firebase/storage";
 
 export class BusinessService {
   /**
@@ -416,6 +419,90 @@ export class BusinessService {
     } catch (error) {
       console.error("Error fetching agent commissions:", error);
       return [];
+    }
+  }
+
+  /**
+   * Add a new hostel for the business
+   * @param hostelData Data for the new hostel to be added
+   * @returns Promise with the newly created hostel ID
+   */
+  static async addHostel(hostelData: any): Promise<string> {
+    try {
+      const currentUser = auth.currentUser;
+      
+      if (!currentUser) {
+        throw new Error("User not authenticated");
+      }
+      
+      // Upload images to Firebase Storage
+      const imageUrls = [];
+      
+      if (hostelData.images && hostelData.images.length > 0) {
+        const storage = getStorage();
+        
+        for (const imageFile of hostelData.images) {
+          try {
+            // Create a storage reference with more unique path to avoid collisions
+            const uniqueFilename = `${Date.now()}_${Math.random().toString(36).substring(2, 15)}_${imageFile.name}`;
+            const imageStorageRef = storageRef(storage, `hostels/${currentUser.uid}/${uniqueFilename}`);
+            
+            // Set proper metadata for CORS handling
+            const metadata = {
+              contentType: imageFile.type,
+              customMetadata: {
+                'origin': window.location.origin,
+                'uploaded-by': currentUser.uid
+              }
+            };
+            
+            // Upload the file with metadata
+            const snapshot = await uploadBytes(imageStorageRef, imageFile, metadata);
+            
+            // Get the download URL
+            const downloadURL = await getDownloadURL(snapshot.ref);
+            imageUrls.push(downloadURL);
+            
+            console.log("Image uploaded successfully:", downloadURL);
+          } catch (error) {
+            console.error("Error uploading image:", error);
+            // Continue with other images even if one fails
+          }
+        }
+      }
+      
+      // Create a clean data object for Firestore (without the File objects)
+      const hostelWithBusinessId = {
+        name: hostelData.name,
+        description: hostelData.description,
+        location: `${hostelData.location.address}, ${hostelData.location.city}, ${hostelData.location.state}`,
+        locationDetails: hostelData.location, // Store detailed location data
+        imageUrls: [...imageUrls, ...(hostelData.imageUrls || [])], // Combine uploaded URLs with any existing URLs
+        pricePerYear: hostelData.pricePerYear,
+        price: `₦${Number(hostelData.pricePerYear).toLocaleString()}/year`,
+        roomTypes: hostelData.roomTypes,
+        availableRooms: hostelData.availableRooms,
+        amenities: hostelData.amenities,
+        contact: hostelData.contact,
+        rules: hostelData.rules,
+        geolocation: hostelData.geolocation,
+        businessId: currentUser.uid,
+        createdAt: new Date(),
+        rating: 0,
+        reviewCount: 0
+      };
+      
+      // Add the hostel to Firestore
+      const hostelRef = collection(db, "hostels");
+      const docRef = await addDoc(hostelRef, hostelWithBusinessId);
+      
+      console.log("Hostel added successfully with ID:", docRef.id);
+      
+      // Return the ID of the newly created hostel
+      return docRef.id;
+    } catch (error) {
+      console.error("Error adding hostel:", error);
+      throw error;
     }
   }
 }

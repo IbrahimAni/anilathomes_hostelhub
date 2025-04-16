@@ -1,13 +1,15 @@
 "use client";
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { Tab } from '@headlessui/react';
 import { useRouter } from 'next/navigation';
 import { auth } from "@/config/firebase";
-import { BusinessService } from '@/services/business.service';
+// Update the import to use the barrel file
+import { BusinessService } from '@/services';
 import { RoomData, AgentCommissionData } from '@/types/business';
 import RoomOccupancy from '@/components/dashboard/business/RoomOccupancy';
 import AgentCommissions from '@/components/dashboard/business/AgentCommissions';
+import AddHostelModal from '@/components/dashboard/business/AddHostelModal';
 
 const PropertiesPage = () => {
   const router = useRouter();
@@ -16,38 +18,10 @@ const PropertiesPage = () => {
   const [selectedProperty, setSelectedProperty] = useState<string | null>(null);
   const [roomsData, setRoomsData] = useState<RoomData[]>([]);
   const [agentsData, setAgentsData] = useState<AgentCommissionData[]>([]);
-
-  useEffect(() => {
-    const fetchProperties = async () => {
-      try {
-        // Check if user is authenticated
-        const currentUser = auth.currentUser;
-        if (!currentUser) {
-          router.push('/login');
-          return;
-        }
-
-        // Fetch properties owned by this business
-        const hostels = await BusinessService.getBusinessHostels();
-        setProperties(hostels);
-
-        // If there are properties, fetch data for the first one
-        if (hostels.length > 0) {
-          setSelectedProperty(hostels[0].id);
-          await fetchPropertyData(hostels[0].id);
-        }
-      } catch (error) {
-        console.error("Error fetching properties:", error);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchProperties();
-  }, [router]);
+  const [isAddHostelModalOpen, setIsAddHostelModalOpen] = useState(false);
 
   // Function to fetch data for a selected property
-  const fetchPropertyData = async (propertyId: string) => {
+  const fetchPropertyData = useCallback(async (propertyId: string) => {
     try {
       setLoading(true);
       
@@ -63,7 +37,41 @@ const PropertiesPage = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
+
+  // Function to fetch all properties - wrapped in useCallback to prevent recreation on every render
+  const fetchProperties = useCallback(async () => {
+    try {
+      setLoading(true);
+      // Check if user is authenticated
+      const currentUser = auth.currentUser;
+      if (!currentUser) {
+        router.push('/login');
+        return;
+      }
+
+      // Fetch properties owned by this business
+      const hostels = await BusinessService.getBusinessHostels();
+      setProperties(hostels);
+
+      // If there are properties, fetch data for the first one
+      if (hostels.length > 0) {
+        setSelectedProperty(hostels[0].id);
+        await fetchPropertyData(hostels[0].id);
+      } else {
+        // Make sure we stop loading even if there are no properties
+        setLoading(false);
+      }
+    } catch (error) {
+      console.error("Error fetching properties:", error);
+      setLoading(false);
+    }
+  }, [router, fetchPropertyData]);
+
+  // Add the missing useEffect hook to trigger initial data fetch
+  useEffect(() => {
+    fetchProperties();
+  }, [fetchProperties]);
 
   // Handle property tab change
   const handleTabChange = async (index: number) => {
@@ -71,6 +79,21 @@ const PropertiesPage = () => {
       setSelectedProperty(properties[index].id);
       await fetchPropertyData(properties[index].id);
     }
+  };
+
+  // Handle opening the Add Hostel modal
+  const handleAddHostelClick = () => {
+    setIsAddHostelModalOpen(true);
+  };
+
+  // Handle closing the Add Hostel modal
+  const handleCloseAddHostelModal = () => {
+    setIsAddHostelModalOpen(false);
+  };
+
+  // Handle successfully adding a new hostel
+  const handleHostelAdded = () => {
+    fetchProperties();
   };
 
   function classNames(...classes: string[]) {
@@ -102,6 +125,7 @@ const PropertiesPage = () => {
                 className="text-sm bg-indigo-600 text-white py-2 px-4 rounded-md hover:bg-indigo-700 transition-colors flex items-center"
                 data-testid="add-property-button"
                 aria-label="Add new property"
+                onClick={handleAddHostelClick}
               >
                 <svg
                   xmlns="http://www.w3.org/2000/svg"
@@ -279,11 +303,19 @@ const PropertiesPage = () => {
           <button 
             className="bg-indigo-600 text-white py-2 px-6 rounded-md hover:bg-indigo-700 transition-colors"
             data-testid="add-first-property-button"
+            onClick={handleAddHostelClick}
           >
             Add Your First Property
           </button>
         </div>
       )}
+
+      {/* Add Hostel Modal */}
+      <AddHostelModal 
+        isOpen={isAddHostelModalOpen}
+        onClose={handleCloseAddHostelModal}
+        onHostelAdded={handleHostelAdded}
+      />
     </div>
   );
 };
