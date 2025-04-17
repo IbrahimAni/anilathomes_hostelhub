@@ -343,7 +343,6 @@ export default function AddHostelModal({
   const handlePrevious = () => {
     setCurrentStep((prev) => Math.max(prev - 1, 1));
   };
-
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
@@ -354,8 +353,8 @@ export default function AddHostelModal({
     try {
       setLoading(true);
 
-      // Only proceed if at least one image is uploaded or we have data in imageUrls
-      if (formData.images.length === 0 && formData.imageUrls.length === 0) {
+      // Only proceed if at least one image is uploaded
+      if (formData.images.length === 0) {
         setErrors({
           ...errors,
           images: "At least one image is required",
@@ -364,8 +363,15 @@ export default function AddHostelModal({
         return;
       }
 
+      // Create a clean copy of formData without the temporary blob URLs
+      const cleanFormData = {
+        ...formData,
+        // Don't include temporary blob URLs, they're only for preview
+        imageUrls: [] 
+      };
+
       // Call the service to add the hostel with the images
-      await BusinessService.addHostel(formData);
+      await BusinessService.addHostel(cleanFormData);
 
       // Reset form and close modal
       setFormData(initialFormData);

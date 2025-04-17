@@ -311,6 +311,7 @@ const PropertiesPage = () => {
                               <button 
                                 className="text-sm bg-white border border-gray-300 text-gray-700 py-1 px-3 rounded hover:bg-gray-50 transition-colors"
                                 data-testid={`view-details-${property.id}`}
+                                onClick={() => router.push(`/dashboard/business/properties/${property.id}`)}
                               >
                                 <svg
                                   xmlns="http://www.w3.org/2000/svg"

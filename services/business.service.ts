@@ -630,6 +630,84 @@ export class BusinessService {
       throw error;
     }
   }
+
+  /**
+   * Get detailed information about a specific hostel
+   * @param hostelId ID of the hostel to fetch
+   * @returns Promise with hostel details
+   */
+  static async getHostelDetails(hostelId: string): Promise<{
+    id: string;
+    name: string;
+    description: string;
+    location: string;
+    locationDetails?: {
+      address: string;
+      city: string;
+      state: string;
+      country: string;
+    };
+    imageUrls: string[];
+    price: string;
+    pricePerYear: number;
+    roomTypes: string[];
+    availableRooms: number;
+    amenities: string[];
+    contact?: {
+      email: string;
+      phone: string;
+    };
+    rules?: string;
+    createdAt?: Date;
+    rating?: number;
+    reviewCount?: number;
+  }> {
+    try {
+      const currentUser = auth.currentUser;
+      
+      if (!currentUser) {
+        throw new Error("User not authenticated");
+      }
+      
+      // Get hostel document from Firestore
+      const hostelDocRef = doc(db, "hostels", hostelId);
+      const hostelSnapshot = await getDoc(hostelDocRef);
+      
+      if (!hostelSnapshot.exists()) {
+        throw new Error("Hostel not found");
+      }
+      
+      const hostelData = hostelSnapshot.data();
+      
+      // Verify that the current user is the owner of this hostel
+      if (hostelData.businessId !== currentUser.uid) {
+        throw new Error("Unauthorized - You do not own this hostel");
+      }
+      
+      // Return the combined data with the ID
+      return {
+        id: hostelId,
+        name: hostelData.name || "Unnamed Hostel",
+        description: hostelData.description || "",
+        location: hostelData.location || "",
+        locationDetails: hostelData.locationDetails,
+        imageUrls: hostelData.imageUrls || [],
+        price: hostelData.price || "₦0/year",
+        pricePerYear: hostelData.pricePerYear || 0,
+        roomTypes: hostelData.roomTypes || [],
+        availableRooms: hostelData.availableRooms || 0,
+        amenities: hostelData.amenities || [],
+        contact: hostelData.contact,
+        rules: hostelData.rules,
+        createdAt: hostelData.createdAt?.toDate(),
+        rating: hostelData.rating || 0,
+        reviewCount: hostelData.reviewCount || 0
+      };
+    } catch (error) {
+      console.error("Error fetching hostel details:", error);
+      throw error;
+    }
+  }
 }
 
 // Helper functions
