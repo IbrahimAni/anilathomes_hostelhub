@@ -10,7 +10,8 @@ import {
   getDoc,
   Timestamp,
   DocumentData,
-  addDoc
+  addDoc,
+  deleteDoc
 } from "firebase/firestore";
 import { 
   BookingData, 
@@ -20,8 +21,8 @@ import {
   RoomOccupant,
   AgentBooking
 } from "@/types/business";
-// Add Firebase Storage imports
-import { getStorage, ref as storageRef, uploadBytes, getDownloadURL } from "firebase/storage";
+// Firebase Storage imports
+import { getStorage, ref as storageRef, uploadBytes, getDownloadURL, deleteObject } from "firebase/storage";
 
 export class BusinessService {
   /**
@@ -436,7 +437,6 @@ export class BusinessService {
       return [];
     }
   }
-
   /**
    * Add a new hostel for the business
    * @param hostelData Data for the new hostel to be added
@@ -517,6 +517,116 @@ export class BusinessService {
       return docRef.id;
     } catch (error) {
       console.error("Error adding hostel:", error);
+      throw error;
+    }
+  }
+  
+  /**
+   * Delete a hostel for the business
+   * @param hostelId ID of the hostel to delete
+   * @returns Promise indicating success or failure
+   */
+  static async deleteHostel(hostelId: string): Promise<boolean> {
+    try {
+      const currentUser = auth.currentUser;
+      
+      if (!currentUser) {
+        throw new Error("User not authenticated");
+      }
+      
+      // Get the hostel document to verify ownership
+      const hostelDocRef = doc(db, "hostels", hostelId);
+      const hostelSnapshot = await getDoc(hostelDocRef);
+      
+      if (!hostelSnapshot.exists()) {
+        throw new Error("Hostel not found");
+      }
+      
+      const hostelData = hostelSnapshot.data();
+      
+      // Verify that the current user is the owner of this hostel
+      if (hostelData.businessId !== currentUser.uid) {
+        throw new Error("Unauthorized - You do not own this hostel");
+      }
+      
+      // Delete the hostel document from Firestore
+      await deleteDoc(hostelDocRef);
+        // If there were images, delete them from storage too
+      if (hostelData.imageUrls && hostelData.imageUrls.length > 0) {
+        try {
+          const storage = getStorage();
+          
+          for (const imageUrl of hostelData.imageUrls) {
+            try {
+              // Skip if imageUrl is undefined or empty
+              if (!imageUrl) {
+                console.log("Skipping empty image URL");
+                continue;
+              }
+              
+              // Extract the file path from the URL safely
+              try {
+                const urlObj = new URL(imageUrl);
+                
+                // Check if this is a Firebase Storage URL with the expected format
+                if (urlObj.pathname.includes('/o/')) {
+                  const imagePath = decodeURIComponent(urlObj.pathname.split('/o/')[1]?.split('?')[0]);
+                  
+                  if (imagePath) {
+                    const imageRef = storageRef(storage, imagePath);
+                    await deleteObject(imageRef);
+                    console.log("Image deleted successfully:", imagePath);
+                  }
+                } else {
+                  console.log("Not a Firebase Storage URL or different format:", imageUrl);
+                }
+              } catch (urlError) {
+                // If URL parsing fails, try a different approach using string manipulation
+                console.log("URL parsing failed, trying alternative approach for:", imageUrl);
+                
+                // Extract filename directly if it's a simple path
+                if (imageUrl.includes('/hostels/')) {
+                  const pathParts = imageUrl.split('/hostels/');
+                  if (pathParts.length > 1) {
+                    const relativePath = `hostels/${pathParts[1].split('?')[0]}`;
+                    const imageRef = storageRef(storage, relativePath);
+                    await deleteObject(imageRef);
+                    console.log("Image deleted with alternative method:", relativePath);
+                  }
+                }
+              }
+            } catch (imgError) {
+              console.error("Error deleting image:", imgError);
+              // Continue with other deletions even if one fails
+            }
+          }
+        } catch (storageError) {
+          console.error("Error accessing storage for cleanup:", storageError);
+          // Don't let storage cleanup failure affect the overall operation
+        }
+      }
+      
+      // Record the delete action in activity logs
+      try {
+        const activitiesRef = collection(db, "activities");
+        await addDoc(activitiesRef, {
+          type: "delete_hostel",
+          title: `Deleted hostel: ${hostelData.name}`,
+          description: `Hostel was permanently removed from your properties`,
+          timestamp: new Date(),
+          entityId: hostelId,
+          entityType: "hostel",
+          userId: currentUser.uid
+        });
+      } catch (activityError) {
+        console.error("Error recording activity:", activityError);
+        // Don't let activity logging failure affect the overall operation
+      }
+      
+      console.log("Hostel deleted successfully with ID:", hostelId);
+      return true;
+    } catch (error) {
+      console.error("Error deleting hostel:", error);
       throw error;
     }
   }

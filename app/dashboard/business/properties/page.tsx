@@ -9,11 +9,14 @@ import { RoomData, AgentCommissionData } from '@/types/business';
 import RoomOccupancy from '@/components/dashboard/business/RoomOccupancy';
 import AgentCommissions from '@/components/dashboard/business/AgentCommissions';
 import AddHostelModal from '@/components/dashboard/business/AddHostelModal';
+import { default as ConfirmationModal } from '@/components/common/ConfirmationModal';
 import Image from 'next/image';
+import { toast } from 'react-hot-toast';
 
 const PropertiesPage = () => {
   const router = useRouter();
-  const [loading, setLoading] = useState(true);  const [properties, setProperties] = useState<{ 
+  const [loading, setLoading] = useState(true);  
+  const [properties, setProperties] = useState<{ 
     id: string;
     name: string;
     location?: string;
@@ -24,6 +27,9 @@ const PropertiesPage = () => {
   const [roomsData, setRoomsData] = useState<RoomData[]>([]);
   const [agentsData, setAgentsData] = useState<AgentCommissionData[]>([]);
   const [isAddHostelModalOpen, setIsAddHostelModalOpen] = useState(false);
+  const [isConfirmDeleteModalOpen, setIsConfirmDeleteModalOpen] = useState(false);
+  const [propertyToDelete, setPropertyToDelete] = useState<{id: string, name: string} | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
 
   // Function to fetch data for a selected property
   const fetchPropertyData = useCallback(async (propertyId: string) => {
@@ -90,7 +96,6 @@ const PropertiesPage = () => {
   const handleAddHostelClick = () => {
     setIsAddHostelModalOpen(true);
   };
-
   // Handle closing the Add Hostel modal
   const handleCloseAddHostelModal = () => {
     setIsAddHostelModalOpen(false);
@@ -99,6 +104,43 @@ const PropertiesPage = () => {
   // Handle successfully adding a new hostel
   const handleHostelAdded = () => {
     fetchProperties();
+  };
+  
+  // Handle opening delete confirmation modal
+  const handleDeleteClick = (property: {id: string, name: string}) => {
+    setPropertyToDelete(property);
+    setIsConfirmDeleteModalOpen(true);
+  };
+  
+  // Handle confirming property deletion
+  const handleDeleteConfirm = async () => {
+    if (!propertyToDelete) return;
+    
+    setIsDeleting(true);
+    try {
+      await BusinessService.deleteHostel(propertyToDelete.id);
+      
+      // Remove the deleted property from local state
+      setProperties(prevProperties => 
+        prevProperties.filter(p => p.id !== propertyToDelete.id)
+      );
+      
+      // If the deleted property was the selected one, reset selection
+      if (selectedProperty === propertyToDelete.id) {
+        setSelectedProperty(properties.find(p => p.id !== propertyToDelete.id)?.id || null);
+        setRoomsData([]);
+        setAgentsData([]);
+      }
+      
+      toast.success(`Property "${propertyToDelete.name}" has been deleted`);
+    } catch (error) {
+      console.error("Error deleting property:", error);
+      toast.error("Failed to delete property. Please try again.");
+    } finally {
+      setIsDeleting(false);
+      setIsConfirmDeleteModalOpen(false);
+      setPropertyToDelete(null);
+    }
   };
 
   function classNames(...classes: string[]) {
@@ -245,8 +287,7 @@ const PropertiesPage = () => {
                                   {typeof property.availableRooms === 'number' ? `${property.availableRooms} room${property.availableRooms !== 1 ? 's' : ''} available` : 'Room information not available'}
                                 </span>
                               </p>
-                            </div>
-                            <div className="mt-4 md:mt-0 space-x-2">
+                            </div>                            <div className="mt-4 md:mt-0 space-x-2">
                               <button 
                                 className="text-sm bg-white border border-gray-300 text-gray-700 py-1 px-3 rounded hover:bg-gray-50 transition-colors"
                                 data-testid={`edit-property-${property.id}`}
@@ -292,6 +333,27 @@ const PropertiesPage = () => {
                                   />
                                 </svg>
                                 Details
+                              </button>
+                              <button 
+                                className="text-sm bg-white border border-red-300 text-red-700 py-1 px-3 rounded hover:bg-red-50 transition-colors"
+                                data-testid={`delete-property-${property.id}`}
+                                onClick={() => handleDeleteClick({id: property.id, name: property.name})}
+                              >
+                                <svg
+                                  xmlns="http://www.w3.org/2000/svg"
+                                  className="h-4 w-4 inline mr-1"
+                                  fill="none"
+                                  viewBox="0 0 24 24"
+                                  stroke="currentColor"
+                                >
+                                  <path
+                                    strokeLinecap="round"
+                                    strokeLinejoin="round"
+                                    strokeWidth={2}
+                                    d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
+                                  />
+                                </svg>
+                                Delete
                               </button>
                             </div>
                           </div>
@@ -393,6 +455,18 @@ const PropertiesPage = () => {
         isOpen={isAddHostelModalOpen}
         onClose={handleCloseAddHostelModal}
         onHostelAdded={handleHostelAdded}
+      />
+      
+      {/* Confirmation Modal for Delete */}
+      <ConfirmationModal
+        isOpen={isConfirmDeleteModalOpen}
+        onClose={() => setIsConfirmDeleteModalOpen(false)}
+        onConfirm={handleDeleteConfirm}
+        title="Delete Property"
+        message={`Are you sure you want to delete "${propertyToDelete?.name}"? This action cannot be undone and will remove all associated data.`}
+        confirmButtonText={isDeleting ? "Deleting..." : "Delete"}
+        cancelButtonText="Cancel"
+        danger={true}
       />
     </div>
   );

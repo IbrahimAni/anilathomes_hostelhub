@@ -37,12 +37,14 @@ service cloud.firestore {
       allow create: if request.auth != null && request.resource.data.userId == request.auth.uid;
       allow update: if request.auth != null && resource.data.userId == request.auth.uid;
     }
-    
-    // Allow users to access hostels (read-only)
+      // Allow users to access hostels (read-only)
     match /hostels/{hostelId} {
       allow read: if request.auth != null;
-      // Allow business users to read/write hostels they own
-      allow write: if isBusinessUser() && request.resource.data.businessId == request.auth.uid;
+      // Allow business users to create/update hostels they own
+      allow create, update: if isBusinessUser() && request.resource.data.businessId == request.auth.uid;
+      // Allow business users to delete hostels they own
+      allow delete: if isBusinessUser() && 
+        get(/databases/$(database)/documents/hostels/$(hostelId)).data.businessId == request.auth.uid;
     }
     
     // Allow users to manage their favorite hostels
