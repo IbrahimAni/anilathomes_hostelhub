@@ -1,9 +1,9 @@
 "use client";
 
-import React, { useState, useEffect } from 'react';
-import { Dialog, Transition } from '@headlessui/react';
-import { BusinessService } from '@/services';
-import Image from 'next/image';
+import React, { useState, useEffect } from "react";
+import { Dialog, Transition } from "@headlessui/react";
+import { BusinessService } from "@/services";
+import Image from "next/image";
 
 interface HostelLocation {
   address: string;
@@ -22,7 +22,7 @@ interface HostelFormData {
   description: string;
   location: HostelLocation;
   images: File[];
-  imageUrls: string[]; // To store uploaded image URLs
+  imageUrls: string[];
   pricePerYear: number;
   roomTypes: string[];
   availableRooms: number;
@@ -42,45 +42,68 @@ interface AddHostelModalProps {
 }
 
 const initialFormData: HostelFormData = {
-  name: '',
-  description: '',
+  name: "",
+  description: "",
   location: {
-    address: '',
-    city: '',
-    state: '',
-    country: 'Nigeria',
+    address: "",
+    city: "",
+    state: "",
+    country: "Nigeria",
   },
   images: [],
   imageUrls: [],
   pricePerYear: 0,
-  roomTypes: ['Single'],
+  roomTypes: ["Single"],
   availableRooms: 0,
   amenities: [],
   contact: {
-    email: '',
-    phone: '',
+    email: "",
+    phone: "",
   },
-  rules: '',
+  rules: "",
   geolocation: {
     latitude: 0,
-    longitude: 0
-  }
+    longitude: 0,
+  },
 };
 
 const commonAmenities = [
-  "Wi-Fi", "Security", "Water Supply", "Electricity", "Bathroom", 
-  "Kitchen", "Laundry", "Study Room", "TV Room", "Cafeteria", 
-  "Parking", "Generator", "Air Conditioning"
+  "Wi-Fi",
+  "Security",
+  "Water Supply",
+  "Electricity",
+  "Bathroom",
+  "Kitchen",
+  "Laundry",
+  "Study Room",
+  "TV Room",
+  "Cafeteria",
+  "Parking",
+  "Generator",
+  "Air Conditioning",
 ];
 
-const roomTypeOptions = ["Single", "Double", "Triple", "Quad", "Dormitory", "En-suite", "Studio"];
+const roomTypeOptions = [
+  "Single",
+  "Self Contained",
+  "Room and Parllor Self Contained",
+  "Double",
+  "Dormitory",
+  "En-suite",
+  "Studio",
+];
 
-export default function AddHostelModal({ isOpen, onClose, onHostelAdded }: AddHostelModalProps) {
+export default function AddHostelModal({
+  isOpen,
+  onClose,
+  onHostelAdded,
+}: AddHostelModalProps) {
   const [formData, setFormData] = useState<HostelFormData>(initialFormData);
-  const [errors, setErrors] = useState<Partial<Record<keyof HostelFormData | 'submit', string>>>({});
-  const [loading, setLoading] = useState(false);
-  const [currentStep, setCurrentStep] = useState(1);
-  const totalSteps = 4;
+  const [errors, setErrors] = useState<
+    Partial<Record<keyof HostelFormData | "submit", string>>
+  >({});
+  const [loading, setLoading] = useState(false);  const [currentStep, setCurrentStep] = useState(1);
+  const totalSteps = 5; // Increased to 5 steps - making review and submission separate steps
 
   // Reset form when modal opens
   useEffect(() => {
@@ -94,43 +117,52 @@ export default function AddHostelModal({ isOpen, onClose, onHostelAdded }: AddHo
     }
   }, [isOpen]);
 
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
+  const handleInputChange = (
+    e: React.ChangeEvent<
+      HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement
+    >
+  ) => {
     const { name, value } = e.target;
-    
-    if (name.includes('.')) {
-      const [parent, child] = name.split('.');
-      
-      if (parent === 'geolocation') {
+
+    if (name.includes(".")) {
+      const [parent, child] = name.split(".");
+
+      if (parent === "geolocation") {
         // Special handling for geolocation fields
-        setFormData(prev => ({
+        setFormData((prev) => ({
           ...prev,
           geolocation: {
             ...(prev.geolocation || { latitude: 0, longitude: 0 }),
-            [child]: value === '' ? '' : (child === 'latitude' || child === 'longitude' ? Number(value) : value)
-          }
+            [child]:
+              value === ""
+                ? ""
+                : child === "latitude" || child === "longitude"
+                ? Number(value)
+                : value,
+          },
         }));
       } else {
-        setFormData(prev => ({
+        setFormData((prev) => ({
           ...prev,
           [parent]: {
             ...((prev[parent as keyof typeof prev] as object) || {}),
-            [child]: value
-          }
+            [child]: value,
+          },
         }));
       }
     } else {
-      setFormData(prev => ({
+      setFormData((prev) => ({
         ...prev,
-        [name]: value
+        [name]: value,
       }));
     }
   };
 
   const handleNumberChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
-    setFormData(prev => ({
+    setFormData((prev) => ({
       ...prev,
-      [name]: value === '' ? 0 : Number(value)
+      [name]: value === "" ? 0 : Number(value),
     }));
   };
 
@@ -143,25 +175,25 @@ export default function AddHostelModal({ isOpen, onClose, onHostelAdded }: AddHo
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files.length > 0) {
       const newFiles = Array.from(e.target.files);
-      
+
       // Check if adding these files would exceed the 10 image limit
       if (formData.images.length + newFiles.length > 10) {
-        setErrors({ 
-          ...errors, 
-          images: 'Maximum 10 images allowed' 
+        setErrors({
+          ...errors,
+          images: "Maximum 10 images allowed",
         });
         return;
       }
-      
+
       // Create object URLs for each file
-      const newImageUrls = newFiles.map(file => URL.createObjectURL(file));
-      
-      setFormData(prev => ({
+      const newImageUrls = newFiles.map((file) => URL.createObjectURL(file));
+
+      setFormData((prev) => ({
         ...prev,
         images: [...prev.images, ...newFiles],
-        imageUrls: [...prev.imageUrls, ...newImageUrls]
+        imageUrls: [...prev.imageUrls, ...newImageUrls],
       }));
-      
+
       // Clear any previous errors
       if (errors.images) {
         setErrors({ ...errors, images: undefined });
@@ -176,146 +208,174 @@ export default function AddHostelModal({ isOpen, onClose, onHostelAdded }: AddHo
     if (urlToRevoke) {
       URL.revokeObjectURL(urlToRevoke);
     }
-    
+
     const newImages = [...formData.images];
     const newImageUrls = [...formData.imageUrls];
-    
+
     newImages.splice(index, 1);
     newImageUrls.splice(index, 1);
-    
-    setFormData(prev => ({
+
+    setFormData((prev) => ({
       ...prev,
       images: newImages,
-      imageUrls: newImageUrls
+      imageUrls: newImageUrls,
     }));
   };
 
-
   const handleAmenityToggle = (amenity: string) => {
     const newAmenities = formData.amenities.includes(amenity)
-      ? formData.amenities.filter(a => a !== amenity)
+      ? formData.amenities.filter((a) => a !== amenity)
       : [...formData.amenities, amenity];
-    
-    setFormData(prev => ({
+
+    setFormData((prev) => ({
       ...prev,
-      amenities: newAmenities
+      amenities: newAmenities,
     }));
   };
 
   const handleRoomTypeToggle = (type: string) => {
     const newRoomTypes = formData.roomTypes.includes(type)
-      ? formData.roomTypes.filter(t => t !== type)
+      ? formData.roomTypes.filter((t) => t !== type)
       : [...formData.roomTypes, type];
-    
-    setFormData(prev => ({
+
+    setFormData((prev) => ({
       ...prev,
-      roomTypes: newRoomTypes
+      roomTypes: newRoomTypes,
     }));
   };
-
-  // Update the validateForm function to not trigger submission on review step
   const validateForm = (): boolean => {
     const newErrors: Partial<Record<keyof HostelFormData, string>> = {};
-    
+
     // Step 1 validation
     if (currentStep === 1) {
       if (!formData.name.trim()) {
-        newErrors.name = 'Hostel name is required';
+        newErrors.name = "Hostel name is required";
       }
-      
+
       if (!formData.description.trim()) {
-        newErrors.description = 'Description is required';
+        newErrors.description = "Description is required";
       }
-      
+
       if (!formData.location.address.trim()) {
-        newErrors.location = 'Address is required';
+        newErrors.location = "Address is required";
       }
-      
+
       if (!formData.location.city.trim()) {
-        newErrors.location = 'City is required';
+        newErrors.location = "City is required";
       }
-      
+
       if (!formData.location.state.trim()) {
-        newErrors.location = 'State is required';
+        newErrors.location = "State is required";
+      }
+
+      // Require at least one image
+      if (formData.images.length === 0) {
+        newErrors.images = "At least one image is required";
       }
     }
-    
+
     // Step 2 validation
     if (currentStep === 2) {
       if (formData.pricePerYear <= 0) {
-        newErrors.pricePerYear = 'Price must be greater than zero';
+        newErrors.pricePerYear = "Price must be greater than zero";
       }
-      
+
       if (formData.roomTypes.length === 0) {
-        newErrors.roomTypes = 'Please select at least one room type';
+        newErrors.roomTypes = "Please select at least one room type";
       }
-      
+
       if (formData.availableRooms <= 0) {
-        newErrors.availableRooms = 'Number of available rooms must be greater than zero';
+        newErrors.availableRooms =
+          "Number of available rooms must be greater than zero";
       }
     }
-    
+
     // Step 3 validation
     if (currentStep === 3) {
       const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
       if (formData.contact.email && !emailRegex.test(formData.contact.email)) {
-        newErrors.contact = 'Please enter a valid email address';
+        newErrors.contact = "Please enter a valid email address";
       }
-      
-      if (formData.contact.phone && !/^\d{10,15}$/.test(formData.contact.phone.replace(/\D/g, ''))) {
-        newErrors.contact = 'Please enter a valid phone number';
+
+      if (
+        formData.contact.phone &&
+        !/^\d{10,15}$/.test(formData.contact.phone.replace(/\D/g, ""))
+      ) {
+        newErrors.contact = "Please enter a valid phone number";
       }
     }
-    
-    // For step 4 (review), we don't need validation before submission.
-    // The form will be validated when handleSubmit is explicitly called.
-    
+    // For step 4 (review), we also validate all previous steps to ensure completeness
+    if (currentStep === 4) {
+      // Basic info (Step 1)
+      if (!formData.name.trim()) newErrors.name = "Hostel name is required";
+      if (!formData.description.trim())
+        newErrors.description = "Description is required";
+      if (
+        !formData.location.address.trim() ||
+        !formData.location.city.trim() ||
+        !formData.location.state.trim()
+      ) {
+        newErrors.location = "Complete address information is required";
+      }
+      if (formData.images.length === 0)
+        newErrors.images = "At least one image is required";
+
+      // Rooms & Pricing (Step 2)
+      if (formData.pricePerYear <= 0)
+        newErrors.pricePerYear = "Price must be greater than zero";
+      if (formData.roomTypes.length === 0)
+        newErrors.roomTypes = "At least one room type is required";
+      if (formData.availableRooms <= 0)
+        newErrors.availableRooms =
+          "Number of available rooms must be greater than zero";
+    }
+
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
 
   const handleNext = () => {
     if (validateForm()) {
-      setCurrentStep(prev => Math.min(prev + 1, totalSteps));
+      setCurrentStep((prev) => Math.min(prev + 1, totalSteps));
     }
   };
 
   const handlePrevious = () => {
-    setCurrentStep(prev => Math.max(prev - 1, 1));
+    setCurrentStep((prev) => Math.max(prev - 1, 1));
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (!validateForm()) {
       return;
     }
-    
+
     try {
       setLoading(true);
-      
+
       // Only proceed if at least one image is uploaded or we have data in imageUrls
       if (formData.images.length === 0 && formData.imageUrls.length === 0) {
         setErrors({
           ...errors,
-          images: 'At least one image is required'
+          images: "At least one image is required",
         });
         setLoading(false);
         return;
       }
-      
+
       // Call the service to add the hostel with the images
       await BusinessService.addHostel(formData);
-      
+
       // Reset form and close modal
       setFormData(initialFormData);
       onHostelAdded();
       onClose();
     } catch (error) {
-      console.error('Error adding hostel:', error);
+      console.error("Error adding hostel:", error);
       setErrors({
         ...errors,
-        submit: 'Failed to add hostel. Please try again.'
+        submit: "Failed to add hostel. Please try again.",
       });
     } finally {
       setLoading(false);
@@ -324,9 +384,9 @@ export default function AddHostelModal({ isOpen, onClose, onHostelAdded }: AddHo
 
   return (
     <Transition show={isOpen} as={React.Fragment}>
-      <Dialog 
-        as="div" 
-        className="fixed inset-0 z-10 overflow-y-auto" 
+      <Dialog
+        as="div"
+        className="fixed inset-0 z-10 overflow-y-auto"
         onClose={onClose}
         data-testid="add-hostel-modal"
       >
@@ -350,7 +410,7 @@ export default function AddHostelModal({ isOpen, onClose, onHostelAdded }: AddHo
           >
             &#8203;
           </span>
-          
+
           <Transition.Child
             as={React.Fragment}
             enter="ease-out duration-300"
@@ -368,7 +428,7 @@ export default function AddHostelModal({ isOpen, onClose, onHostelAdded }: AddHo
                 >
                   Add New Hostel
                 </Dialog.Title>
-                
+
                 {/* Close button */}
                 <button
                   type="button"
@@ -378,52 +438,74 @@ export default function AddHostelModal({ isOpen, onClose, onHostelAdded }: AddHo
                   aria-label="Close modal"
                 >
                   <span className="sr-only">Close</span>
-                  <svg className="h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
+                  <svg
+                    className="h-5 w-5"
+                    xmlns="http://www.w3.org/2000/svg"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                    aria-hidden="true"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth="2"
+                      d="M6 18L18 6M6 6l12 12"
+                    />
                   </svg>
                 </button>
               </div>
-              
+
               {/* Step indicator */}
               <div className="mt-4 mb-6">
                 <div className="flex items-center">
                   {Array.from({ length: totalSteps }).map((_, index) => (
                     <React.Fragment key={index}>
-                      <div 
+                      <div
                         className={`w-8 h-8 rounded-full flex items-center justify-center ${
-                          currentStep > index + 1 
-                            ? 'bg-indigo-600 text-white' 
-                            : currentStep === index + 1 
-                              ? 'bg-indigo-100 border-2 border-indigo-600 text-indigo-600' 
-                              : 'bg-gray-200 text-gray-600'
+                          currentStep > index + 1
+                            ? "bg-indigo-600 text-white"
+                            : currentStep === index + 1
+                            ? "bg-indigo-100 border-2 border-indigo-600 text-indigo-600"
+                            : "bg-gray-200 text-gray-600"
                         }`}
                       >
                         {index + 1}
                       </div>
                       {index < totalSteps - 1 && (
-                        <div 
+                        <div
                           className={`h-1 flex-1 ${
-                            currentStep > index + 1 ? 'bg-indigo-600' : 'bg-gray-200'
+                            currentStep > index + 1
+                              ? "bg-indigo-600"
+                              : "bg-gray-200"
                           }`}
                         />
                       )}
                     </React.Fragment>
                   ))}
-                </div>
-                <div className="flex justify-between mt-2">
+                </div>                <div className="flex justify-between mt-2">
                   <span className="text-xs">Basic Info</span>
                   <span className="text-xs">Rooms & Pricing</span>
                   <span className="text-xs">Amenities & Contact</span>
                   <span className="text-xs">Review</span>
+                  <span className="text-xs">Submit</span>
                 </div>
-              </div>
-              
-              <form onSubmit={handleSubmit} className="mt-4">
+              </div>              <form onSubmit={(e) => {
+                // Only allow submission on step 5 (the final submission step)
+                if (currentStep !== 5) {
+                  e.preventDefault();
+                  return false;
+                }
+                handleSubmit(e);
+              }} className="mt-4">
                 {/* Step 1: Basic Information */}
                 {currentStep === 1 && (
                   <div className="space-y-4" data-testid="form-step-1">
                     <div>
-                      <label htmlFor="name" className="block text-sm font-medium text-gray-700">
+                      <label
+                        htmlFor="name"
+                        className="block text-sm font-medium text-gray-700"
+                      >
                         Hostel Name *
                       </label>
                       <input
@@ -433,16 +515,23 @@ export default function AddHostelModal({ isOpen, onClose, onHostelAdded }: AddHo
                         value={formData.name}
                         onChange={handleInputChange}
                         className={`mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm ${
-                          errors.name ? 'border-red-500' : ''
+                          errors.name ? "border-red-500" : ""
                         }`}
                         data-testid="hostel-name-input"
                         required
                       />
-                      {errors.name && <p className="mt-1 text-sm text-red-500">{errors.name}</p>}
+                      {errors.name && (
+                        <p className="mt-1 text-sm text-red-500">
+                          {errors.name}
+                        </p>
+                      )}
                     </div>
-                    
+
                     <div>
-                      <label htmlFor="description" className="block text-sm font-medium text-gray-700">
+                      <label
+                        htmlFor="description"
+                        className="block text-sm font-medium text-gray-700"
+                      >
                         Description *
                       </label>
                       <textarea
@@ -452,17 +541,24 @@ export default function AddHostelModal({ isOpen, onClose, onHostelAdded }: AddHo
                         value={formData.description}
                         onChange={handleInputChange}
                         className={`mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm ${
-                          errors.description ? 'border-red-500' : ''
+                          errors.description ? "border-red-500" : ""
                         }`}
                         data-testid="hostel-description-input"
                         required
                       />
-                      {errors.description && <p className="mt-1 text-sm text-red-500">{errors.description}</p>}
+                      {errors.description && (
+                        <p className="mt-1 text-sm text-red-500">
+                          {errors.description}
+                        </p>
+                      )}
                     </div>
-                    
+
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       <div>
-                        <label htmlFor="location.address" className="block text-sm font-medium text-gray-700">
+                        <label
+                          htmlFor="location.address"
+                          className="block text-sm font-medium text-gray-700"
+                        >
                           Address *
                         </label>
                         <input
@@ -472,15 +568,18 @@ export default function AddHostelModal({ isOpen, onClose, onHostelAdded }: AddHo
                           value={formData.location.address}
                           onChange={handleInputChange}
                           className={`mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm ${
-                            errors.location ? 'border-red-500' : ''
+                            errors.location ? "border-red-500" : ""
                           }`}
                           data-testid="hostel-address-input"
                           required
                         />
                       </div>
-                      
+
                       <div>
-                        <label htmlFor="location.city" className="block text-sm font-medium text-gray-700">
+                        <label
+                          htmlFor="location.city"
+                          className="block text-sm font-medium text-gray-700"
+                        >
                           City *
                         </label>
                         <input
@@ -490,15 +589,18 @@ export default function AddHostelModal({ isOpen, onClose, onHostelAdded }: AddHo
                           value={formData.location.city}
                           onChange={handleInputChange}
                           className={`mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm ${
-                            errors.location ? 'border-red-500' : ''
+                            errors.location ? "border-red-500" : ""
                           }`}
                           data-testid="hostel-city-input"
                           required
                         />
                       </div>
-                      
+
                       <div>
-                        <label htmlFor="location.state" className="block text-sm font-medium text-gray-700">
+                        <label
+                          htmlFor="location.state"
+                          className="block text-sm font-medium text-gray-700"
+                        >
                           State *
                         </label>
                         <input
@@ -508,15 +610,18 @@ export default function AddHostelModal({ isOpen, onClose, onHostelAdded }: AddHo
                           value={formData.location.state}
                           onChange={handleInputChange}
                           className={`mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm ${
-                            errors.location ? 'border-red-500' : ''
+                            errors.location ? "border-red-500" : ""
                           }`}
                           data-testid="hostel-state-input"
                           required
                         />
                       </div>
-                      
+
                       <div>
-                        <label htmlFor="location.country" className="block text-sm font-medium text-gray-700">
+                        <label
+                          htmlFor="location.country"
+                          className="block text-sm font-medium text-gray-700"
+                        >
                           Country *
                         </label>
                         <input
@@ -531,24 +636,28 @@ export default function AddHostelModal({ isOpen, onClose, onHostelAdded }: AddHo
                         />
                       </div>
                     </div>
-                    
-                    {errors.location && <p className="mt-1 text-sm text-red-500">{errors.location}</p>}
-                    
+
+                    {errors.location && (
+                      <p className="mt-1 text-sm text-red-500">
+                        {errors.location}
+                      </p>
+                    )}
+
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-2">
                         Hostel Images (Up to 10) *
                       </label>
-                      
-                      {/* Display image previews */}
+                      {/* Display image previews */}{" "}
                       {formData.images.length > 0 && (
                         <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3 mb-4">
                           {formData.images.map((file, index) => (
-                            <div key={index} className="relative group">
-                              <div className="h-24 w-full rounded-md overflow-hidden bg-gray-100">
+                            <div key={index} className="relative group">                              <div className="h-24 w-full rounded-md overflow-hidden bg-gray-100 relative">
                                 <Image
                                   src={getImagePreviewUrl(file)}
                                   alt={`Preview ${index + 1}`}
-                                  className="h-full w-full object-cover"
+                                  fill
+                                  sizes="(max-width: 768px) 100vw, 33vw"
+                                  className="object-cover"
                                 />
                               </div>
                               <button
@@ -557,16 +666,26 @@ export default function AddHostelModal({ isOpen, onClose, onHostelAdded }: AddHo
                                 className="absolute -top-2 -right-2 bg-white rounded-full p-1 shadow-sm text-red-500 hover:text-red-700 focus:outline-none"
                                 data-testid={`remove-image-${index}`}
                               >
-                                <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
-                                  <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
+                                <svg
+                                  xmlns="http://www.w3.org/2000/svg"
+                                  className="h-4 w-4"
+                                  viewBox="0 0 20 20"
+                                  fill="currentColor"
+                                >
+                                  <path
+                                    fillRule="evenodd"
+                                    d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z"
+                                    clipRule="evenodd"
+                                  />
                                 </svg>
                               </button>
-                              <p className="mt-1 text-xs text-gray-500 truncate">{file.name}</p>
+                              <p className="mt-1 text-xs text-gray-500 truncate">
+                                {file.name}
+                              </p>
                             </div>
                           ))}
                         </div>
                       )}
-                      
                       {/* Upload button */}
                       {formData.images.length < 10 && (
                         <div>
@@ -591,35 +710,45 @@ export default function AddHostelModal({ isOpen, onClose, onHostelAdded }: AddHo
                                   />
                                 </svg>
                                 <div className="flex text-sm text-gray-600">
-                                  <input 
-                                    id="image-upload" 
-                                    name="image-upload" 
+                                  <input
+                                    id="image-upload"
+                                    name="image-upload"
                                     type="file"
                                     accept="image/*"
-                                    multiple 
+                                    multiple
                                     onChange={handleImageChange}
                                     className="sr-only"
                                     data-testid="image-upload-input"
                                   />
-                                  <p className="pl-1">Click to upload images or drag and drop</p>
+                                  <p className="pl-1">
+                                    Click to upload images or drag and drop
+                                  </p>
                                 </div>
-                                <p className="text-xs text-gray-500">PNG, JPG, GIF up to 10 images</p>
+                                <p className="text-xs text-gray-500">
+                                  PNG, JPG, GIF up to 10 images
+                                </p>
                               </div>
                             </div>
                           </label>
                         </div>
                       )}
-                      
-                      {errors.images && <p className="mt-1 text-sm text-red-500">{errors.images}</p>}
+                      {errors.images && (
+                        <p className="mt-1 text-sm text-red-500">
+                          {errors.images}
+                        </p>
+                      )}
                     </div>
                   </div>
                 )}
-                
+
                 {/* Step 2: Rooms & Pricing */}
                 {currentStep === 2 && (
                   <div className="space-y-4" data-testid="form-step-2">
                     <div>
-                      <label htmlFor="pricePerYear" className="block text-sm font-medium text-gray-700">
+                      <label
+                        htmlFor="pricePerYear"
+                        className="block text-sm font-medium text-gray-700"
+                      >
                         Price Per Year (₦) *
                       </label>
                       <div className="mt-1 relative rounded-md shadow-sm">
@@ -631,18 +760,22 @@ export default function AddHostelModal({ isOpen, onClose, onHostelAdded }: AddHo
                           id="pricePerYear"
                           name="pricePerYear"
                           min="0"
-                          value={formData.pricePerYear || ''}
+                          value={formData.pricePerYear || ""}
                           onChange={handleNumberChange}
                           className={`pl-7 mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm ${
-                            errors.pricePerYear ? 'border-red-500' : ''
+                            errors.pricePerYear ? "border-red-500" : ""
                           }`}
                           data-testid="hostel-price-input"
                           required
                         />
                       </div>
-                      {errors.pricePerYear && <p className="mt-1 text-sm text-red-500">{errors.pricePerYear}</p>}
+                      {errors.pricePerYear && (
+                        <p className="mt-1 text-sm text-red-500">
+                          {errors.pricePerYear}
+                        </p>
+                      )}
                     </div>
-                    
+
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-2">
                         Room Types *
@@ -659,17 +792,27 @@ export default function AddHostelModal({ isOpen, onClose, onHostelAdded }: AddHo
                               onChange={() => handleRoomTypeToggle(type)}
                               data-testid={`roomType-${type}`}
                             />
-                            <label htmlFor={`roomType-${type}`} className="ml-2 block text-sm text-gray-700">
+                            <label
+                              htmlFor={`roomType-${type}`}
+                              className="ml-2 block text-sm text-gray-700"
+                            >
                               {type}
                             </label>
                           </div>
                         ))}
                       </div>
-                      {errors.roomTypes && <p className="mt-1 text-sm text-red-500">{errors.roomTypes}</p>}
+                      {errors.roomTypes && (
+                        <p className="mt-1 text-sm text-red-500">
+                          {errors.roomTypes}
+                        </p>
+                      )}
                     </div>
-                    
+
                     <div>
-                      <label htmlFor="availableRooms" className="block text-sm font-medium text-gray-700">
+                      <label
+                        htmlFor="availableRooms"
+                        className="block text-sm font-medium text-gray-700"
+                      >
                         Available Rooms/Beds *
                       </label>
                       <input
@@ -677,19 +820,23 @@ export default function AddHostelModal({ isOpen, onClose, onHostelAdded }: AddHo
                         id="availableRooms"
                         name="availableRooms"
                         min="1"
-                        value={formData.availableRooms || ''}
+                        value={formData.availableRooms || ""}
                         onChange={handleNumberChange}
                         className={`mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm ${
-                          errors.availableRooms ? 'border-red-500' : ''
+                          errors.availableRooms ? "border-red-500" : ""
                         }`}
                         data-testid="hostel-availability-input"
                         required
                       />
-                      {errors.availableRooms && <p className="mt-1 text-sm text-red-500">{errors.availableRooms}</p>}
+                      {errors.availableRooms && (
+                        <p className="mt-1 text-sm text-red-500">
+                          {errors.availableRooms}
+                        </p>
+                      )}
                     </div>
                   </div>
                 )}
-                
+
                 {/* Step 3: Amenities & Contact */}
                 {currentStep === 3 && (
                   <div className="space-y-4" data-testid="form-step-3">
@@ -709,17 +856,23 @@ export default function AddHostelModal({ isOpen, onClose, onHostelAdded }: AddHo
                               onChange={() => handleAmenityToggle(amenity)}
                               data-testid={`amenity-${amenity}`}
                             />
-                            <label htmlFor={`amenity-${amenity}`} className="ml-2 block text-sm text-gray-700">
+                            <label
+                              htmlFor={`amenity-${amenity}`}
+                              className="ml-2 block text-sm text-gray-700"
+                            >
                               {amenity}
                             </label>
                           </div>
                         ))}
                       </div>
                     </div>
-                    
+
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       <div>
-                        <label htmlFor="contact.email" className="block text-sm font-medium text-gray-700">
+                        <label
+                          htmlFor="contact.email"
+                          className="block text-sm font-medium text-gray-700"
+                        >
                           Contact Email
                         </label>
                         <input
@@ -729,14 +882,17 @@ export default function AddHostelModal({ isOpen, onClose, onHostelAdded }: AddHo
                           value={formData.contact.email}
                           onChange={handleInputChange}
                           className={`mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm ${
-                            errors.contact ? 'border-red-500' : ''
+                            errors.contact ? "border-red-500" : ""
                           }`}
                           data-testid="hostel-email-input"
                         />
                       </div>
-                      
+
                       <div>
-                        <label htmlFor="contact.phone" className="block text-sm font-medium text-gray-700">
+                        <label
+                          htmlFor="contact.phone"
+                          className="block text-sm font-medium text-gray-700"
+                        >
                           Contact Phone
                         </label>
                         <input
@@ -746,16 +902,23 @@ export default function AddHostelModal({ isOpen, onClose, onHostelAdded }: AddHo
                           value={formData.contact.phone}
                           onChange={handleInputChange}
                           className={`mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm ${
-                            errors.contact ? 'border-red-500' : ''
+                            errors.contact ? "border-red-500" : ""
                           }`}
                           data-testid="hostel-phone-input"
                         />
                       </div>
                     </div>
-                    {errors.contact && <p className="mt-1 text-sm text-red-500">{errors.contact}</p>}
-                    
+                    {errors.contact && (
+                      <p className="mt-1 text-sm text-red-500">
+                        {errors.contact}
+                      </p>
+                    )}
+
                     <div>
-                      <label htmlFor="rules" className="block text-sm font-medium text-gray-700">
+                      <label
+                        htmlFor="rules"
+                        className="block text-sm font-medium text-gray-700"
+                      >
                         Hostel Rules
                       </label>
                       <textarea
@@ -768,10 +931,13 @@ export default function AddHostelModal({ isOpen, onClose, onHostelAdded }: AddHo
                         data-testid="hostel-rules-input"
                       />
                     </div>
-                    
+
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       <div>
-                        <label htmlFor="geolocation.latitude" className="block text-sm font-medium text-gray-700">
+                        <label
+                          htmlFor="geolocation.latitude"
+                          className="block text-sm font-medium text-gray-700"
+                        >
                           Latitude (Optional)
                         </label>
                         <input
@@ -779,15 +945,18 @@ export default function AddHostelModal({ isOpen, onClose, onHostelAdded }: AddHo
                           id="geolocation.latitude"
                           name="geolocation.latitude"
                           step="any"
-                          value={formData.geolocation?.latitude || ''}
+                          value={formData.geolocation?.latitude || ""}
                           onChange={handleInputChange}
                           className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
                           data-testid="hostel-latitude-input"
                         />
                       </div>
-                      
+
                       <div>
-                        <label htmlFor="geolocation.longitude" className="block text-sm font-medium text-gray-700">
+                        <label
+                          htmlFor="geolocation.longitude"
+                          className="block text-sm font-medium text-gray-700"
+                        >
                           Longitude (Optional)
                         </label>
                         <input
@@ -795,7 +964,7 @@ export default function AddHostelModal({ isOpen, onClose, onHostelAdded }: AddHo
                           id="geolocation.longitude"
                           name="geolocation.longitude"
                           step="any"
-                          value={formData.geolocation?.longitude || ''}
+                          value={formData.geolocation?.longitude || ""}
                           onChange={handleInputChange}
                           className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
                           data-testid="hostel-longitude-input"
@@ -804,81 +973,131 @@ export default function AddHostelModal({ isOpen, onClose, onHostelAdded }: AddHo
                     </div>
                   </div>
                 )}
-                
+
                 {/* Step 4: Review */}
                 {currentStep === 4 && (
                   <div className="space-y-4" data-testid="form-step-4">
                     <div className="bg-gray-50 p-4 rounded-md">
-                      <h4 className="text-lg font-medium mb-2">Review Your Hostel Information</h4>
-                      
+                      <h4 className="text-lg font-medium mb-2">
+                        Review Your Hostel Information
+                      </h4>
+
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div>
-                          <p className="text-sm font-medium text-gray-700">Hostel Name:</p>
-                          <p className="text-sm text-gray-600">{formData.name}</p>
-                        </div>
-                        
-                        <div>
-                          <p className="text-sm font-medium text-gray-700">Price Per Year:</p>
-                          <p className="text-sm text-gray-600">₦{formData.pricePerYear.toLocaleString()}</p>
-                        </div>
-                        
-                        <div>
-                          <p className="text-sm font-medium text-gray-700">Location:</p>
+                          <p className="text-sm font-medium text-gray-700">
+                            Hostel Name:
+                          </p>
                           <p className="text-sm text-gray-600">
-                            {formData.location.address}, {formData.location.city}, {formData.location.state}, {formData.location.country}
+                            {formData.name}
                           </p>
                         </div>
-                        
+
                         <div>
-                          <p className="text-sm font-medium text-gray-700">Available Rooms:</p>
-                          <p className="text-sm text-gray-600">{formData.availableRooms}</p>
-                        </div>
-                        
-                        <div>
-                          <p className="text-sm font-medium text-gray-700">Room Types:</p>
-                          <p className="text-sm text-gray-600">{formData.roomTypes.join(', ')}</p>
-                        </div>
-                        
-                        <div>
-                          <p className="text-sm font-medium text-gray-700">Amenities:</p>
+                          <p className="text-sm font-medium text-gray-700">
+                            Price Per Year:
+                          </p>
                           <p className="text-sm text-gray-600">
-                            {formData.amenities.length > 0 ? formData.amenities.join(', ') : 'None specified'}
+                            ₦{formData.pricePerYear.toLocaleString()}
                           </p>
                         </div>
-                        
+
                         <div>
-                          <p className="text-sm font-medium text-gray-700">Contact:</p>
+                          <p className="text-sm font-medium text-gray-700">
+                            Location:
+                          </p>
                           <p className="text-sm text-gray-600">
-                            {formData.contact.email ? `Email: ${formData.contact.email}` : ''}
-                            {formData.contact.email && formData.contact.phone ? ', ' : ''}
-                            {formData.contact.phone ? `Phone: ${formData.contact.phone}` : ''}
-                            {!formData.contact.email && !formData.contact.phone && 'None specified'}
+                            {formData.location.address},{" "}
+                            {formData.location.city}, {formData.location.state},{" "}
+                            {formData.location.country}
+                          </p>
+                        </div>
+
+                        <div>
+                          <p className="text-sm font-medium text-gray-700">
+                            Available Rooms:
+                          </p>
+                          <p className="text-sm text-gray-600">
+                            {formData.availableRooms}
+                          </p>
+                        </div>
+
+                        <div>
+                          <p className="text-sm font-medium text-gray-700">
+                            Room Types:
+                          </p>
+                          <p className="text-sm text-gray-600">
+                            {formData.roomTypes.join(", ")}
+                          </p>
+                        </div>
+
+                        <div>
+                          <p className="text-sm font-medium text-gray-700">
+                            Amenities:
+                          </p>
+                          <p className="text-sm text-gray-600">
+                            {formData.amenities.length > 0
+                              ? formData.amenities.join(", ")
+                              : "None specified"}
+                          </p>
+                        </div>
+
+                        <div>
+                          <p className="text-sm font-medium text-gray-700">
+                            Contact:
+                          </p>
+                          <p className="text-sm text-gray-600">
+                            {formData.contact.email
+                              ? `Email: ${formData.contact.email}`
+                              : ""}
+                            {formData.contact.email && formData.contact.phone
+                              ? ", "
+                              : ""}
+                            {formData.contact.phone
+                              ? `Phone: ${formData.contact.phone}`
+                              : ""}
+                            {!formData.contact.email &&
+                              !formData.contact.phone &&
+                              "None specified"}
                           </p>
                         </div>
                       </div>
-                      
+
                       <div className="mt-4">
-                        <p className="text-sm font-medium text-gray-700">Description:</p>
-                        <p className="text-sm text-gray-600">{formData.description}</p>
+                        <p className="text-sm font-medium text-gray-700">
+                          Description:
+                        </p>
+                        <p className="text-sm text-gray-600">
+                          {formData.description}
+                        </p>
                       </div>
-                      
+
                       {formData.rules && (
                         <div className="mt-4">
-                          <p className="text-sm font-medium text-gray-700">Rules:</p>
-                          <p className="text-sm text-gray-600">{formData.rules}</p>
+                          <p className="text-sm font-medium text-gray-700">
+                            Rules:
+                          </p>
+                          <p className="text-sm text-gray-600">
+                            {formData.rules}
+                          </p>
                         </div>
                       )}
-                      
                       {formData.images.length > 0 && (
                         <div className="mt-4">
-                          <p className="text-sm font-medium text-gray-700">Images ({formData.images.length}):</p>
+                          <p className="text-sm font-medium text-gray-700">
+                            Images ({formData.images.length}):
+                          </p>
                           <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 mt-2">
-                            {formData.images.map((file, index) => (
-                              <div key={index} className="relative h-16 rounded-md overflow-hidden bg-gray-100">
+                            {" "}
+                            {formData.images.map((file, index) => (                              <div
+                                key={index}
+                                className="relative h-16 rounded-md overflow-hidden bg-gray-100"
+                              >
                                 <Image
                                   src={getImagePreviewUrl(file)}
                                   alt={`Image ${index + 1}`}
-                                  className="h-full w-full object-cover"
+                                  fill
+                                  sizes="(max-width: 768px) 100vw, 25vw"
+                                  className="object-cover"
                                 />
                               </div>
                             ))}
@@ -886,11 +1105,15 @@ export default function AddHostelModal({ isOpen, onClose, onHostelAdded }: AddHo
                         </div>
                       )}
                     </div>
-                    
-                    {errors.submit && <p className="mt-1 text-sm text-red-500">{errors.submit}</p>}
+
+                    {errors.submit && (
+                      <p className="mt-1 text-sm text-red-500">
+                        {errors.submit}
+                      </p>
+                    )}
                   </div>
                 )}
-                
+
                 <div className="mt-8 flex justify-between">
                   {currentStep > 1 ? (
                     <button
@@ -910,9 +1133,7 @@ export default function AddHostelModal({ isOpen, onClose, onHostelAdded }: AddHo
                     >
                       Cancel
                     </button>
-                  )}
-                  
-                  {currentStep < totalSteps ? (
+                  )}{" "}                  {currentStep < 3 ? (
                     <button
                       type="button"
                       onClick={handleNext}
@@ -921,25 +1142,59 @@ export default function AddHostelModal({ isOpen, onClose, onHostelAdded }: AddHo
                     >
                       Next
                     </button>
+                  ) : currentStep === 3 ? (
+                    <button
+                      type="button"
+                      onClick={handleNext}
+                      className="inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+                      data-testid="review-button"
+                    >
+                      Review
+                    </button>
+                  ) : currentStep === 4 ? (
+                    <button
+                      type="button"
+                      onClick={handleNext}
+                      className="inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+                      data-testid="confirm-button"
+                    >
+                      Confirm
+                    </button>
                   ) : (
                     <button
                       type="submit"
                       className={`inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 ${
-                        loading ? 'opacity-75 cursor-not-allowed' : ''
+                        loading ? "opacity-75 cursor-not-allowed" : ""
                       }`}
                       disabled={loading}
                       data-testid="submit-hostel-button"
                     >
                       {loading ? (
                         <>
-                          <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                          <svg
+                            className="animate-spin -ml-1 mr-2 h-4 w-4 text-white"
+                            xmlns="http://www.w3.org/2000/svg"
+                            fill="none"
+                            viewBox="0 0 24 24"
+                          >
+                            <circle
+                              className="opacity-25"
+                              cx="12"
+                              cy="12"
+                              r="10"
+                              stroke="currentColor"
+                              strokeWidth="4"
+                            ></circle>
+                            <path
+                              className="opacity-75"
+                              fill="currentColor"
+                              d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                            ></path>
                           </svg>
                           Saving...
                         </>
                       ) : (
-                        'Add Hostel'
+                        "Add Hostel"
                       )}
                     </button>
                   )}

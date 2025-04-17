@@ -4,17 +4,22 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { Tab } from '@headlessui/react';
 import { useRouter } from 'next/navigation';
 import { auth } from "@/config/firebase";
-// Update the import to use the barrel file
 import { BusinessService } from '@/services';
 import { RoomData, AgentCommissionData } from '@/types/business';
 import RoomOccupancy from '@/components/dashboard/business/RoomOccupancy';
 import AgentCommissions from '@/components/dashboard/business/AgentCommissions';
 import AddHostelModal from '@/components/dashboard/business/AddHostelModal';
+import Image from 'next/image';
 
 const PropertiesPage = () => {
   const router = useRouter();
-  const [loading, setLoading] = useState(true);
-  const [properties, setProperties] = useState<{ id: string, name: string }[]>([]);
+  const [loading, setLoading] = useState(true);  const [properties, setProperties] = useState<{ 
+    id: string;
+    name: string;
+    location?: string;
+    imageUrl?: string;
+    availableRooms?: number; 
+  }[]>([]);
   const [selectedProperty, setSelectedProperty] = useState<string | null>(null);
   const [roomsData, setRoomsData] = useState<RoomData[]>([]);
   const [agentsData, setAgentsData] = useState<AgentCommissionData[]>([]);
@@ -175,67 +180,126 @@ const PropertiesPage = () => {
                       'rounded-xl p-3',
                       'focus:outline-none'
                     )}
-                  >
-                    <div className="bg-indigo-50 p-4 rounded-lg mb-4">
-                      <div className="flex flex-col md:flex-row justify-between">
-                        <div>
-                          <h3 className="text-lg font-medium text-gray-900">{property.name}</h3>
-                          {/* Location data would come from the API in a real implementation */}
-                          <p className="text-sm text-gray-600">Location information would be shown here</p>
+                  >                    <div className="bg-white p-4 rounded-lg shadow mb-4 overflow-hidden">
+                      <div className="flex flex-col md:flex-row gap-4">
+                        {/* Property image */}
+                        <div className="w-full md:w-1/3 h-48 relative rounded-lg overflow-hidden">                          {property.imageUrl ? (
+                            <Image 
+                              src={property.imageUrl}
+                              alt={`${property.name}`}
+                              fill
+                              sizes="(max-width: 768px) 100vw, 33vw"
+                              className="object-cover"
+                              data-testid={`property-image-${property.id}`}
+                            />
+                          ) : (
+                            <div className="bg-gray-200 w-full h-full flex items-center justify-center">
+                              <svg
+                                xmlns="http://www.w3.org/2000/svg"
+                                className="h-12 w-12 text-gray-400"
+                                fill="none"
+                                viewBox="0 0 24 24"
+                                stroke="currentColor"
+                              >
+                                <path
+                                  strokeLinecap="round"
+                                  strokeLinejoin="round"
+                                  strokeWidth={1}
+                                  d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"
+                                />
+                                <path
+                                  strokeLinecap="round"
+                                  strokeLinejoin="round"
+                                  strokeWidth={1}
+                                  d="M9 22V12h6v10"
+                                />
+                              </svg>
+                            </div>
+                          )}
                         </div>
-                        <div className="mt-4 md:mt-0 space-x-2">
-                          <button 
-                            className="text-sm bg-white border border-gray-300 text-gray-700 py-1 px-3 rounded hover:bg-gray-50 transition-colors"
-                            data-testid={`edit-property-${property.id}`}
-                          >
-                            <svg
-                              xmlns="http://www.w3.org/2000/svg"
-                              className="h-4 w-4 inline mr-1"
-                              fill="none"
-                              viewBox="0 0 24 24"
-                              stroke="currentColor"
-                            >
-                              <path
-                                strokeLinecap="round"
-                                strokeLinejoin="round"
-                                strokeWidth={2}
-                                d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
-                              />
-                            </svg>
-                            Edit
-                          </button>
-                          <button 
-                            className="text-sm bg-white border border-gray-300 text-gray-700 py-1 px-3 rounded hover:bg-gray-50 transition-colors"
-                            data-testid={`view-details-${property.id}`}
-                          >
-                            <svg
-                              xmlns="http://www.w3.org/2000/svg"
-                              className="h-4 w-4 inline mr-1"
-                              fill="none"
-                              viewBox="0 0 24 24"
-                              stroke="currentColor"
-                            >
-                              <path
-                                strokeLinecap="round"
-                                strokeLinejoin="round"
-                                strokeWidth={2}
-                                d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"
-                              />
-                              <path
-                                strokeLinecap="round"
-                                strokeLinejoin="round"
-                                strokeWidth={2}
-                                d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"
-                              />
-                            </svg>
-                            Details
-                          </button>
+                        
+                        {/* Property details */}
+                        <div className="flex-1">
+                          <div className="flex flex-col md:flex-row justify-between">
+                            <div>
+                              <h3 className="text-lg font-medium text-gray-900">{property.name}</h3>
+                              <p className="text-sm text-gray-600 mt-1">
+                                {property.location || "No location information available"}
+                              </p>
+                              <p className="text-sm text-gray-700 mt-2 flex items-center">
+                                <svg
+                                  xmlns="http://www.w3.org/2000/svg"
+                                  className="h-4 w-4 mr-1 text-indigo-600"
+                                  fill="none"
+                                  viewBox="0 0 24 24"
+                                  stroke="currentColor"
+                                >
+                                  <path
+                                    strokeLinecap="round"
+                                    strokeLinejoin="round"
+                                    strokeWidth={2}
+                                    d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"
+                                  />
+                                </svg>
+                                <span className="font-medium">
+                                  {typeof property.availableRooms === 'number' ? `${property.availableRooms} room${property.availableRooms !== 1 ? 's' : ''} available` : 'Room information not available'}
+                                </span>
+                              </p>
+                            </div>
+                            <div className="mt-4 md:mt-0 space-x-2">
+                              <button 
+                                className="text-sm bg-white border border-gray-300 text-gray-700 py-1 px-3 rounded hover:bg-gray-50 transition-colors"
+                                data-testid={`edit-property-${property.id}`}
+                              >
+                                <svg
+                                  xmlns="http://www.w3.org/2000/svg"
+                                  className="h-4 w-4 inline mr-1"
+                                  fill="none"
+                                  viewBox="0 0 24 24"
+                                  stroke="currentColor"
+                                >
+                                  <path
+                                    strokeLinecap="round"
+                                    strokeLinejoin="round"
+                                    strokeWidth={2}
+                                    d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
+                                  />
+                                </svg>
+                                Edit
+                              </button>
+                              <button 
+                                className="text-sm bg-white border border-gray-300 text-gray-700 py-1 px-3 rounded hover:bg-gray-50 transition-colors"
+                                data-testid={`view-details-${property.id}`}
+                              >
+                                <svg
+                                  xmlns="http://www.w3.org/2000/svg"
+                                  className="h-4 w-4 inline mr-1"
+                                  fill="none"
+                                  viewBox="0 0 24 24"
+                                  stroke="currentColor"
+                                >
+                                  <path
+                                    strokeLinecap="round"
+                                    strokeLinejoin="round"
+                                    strokeWidth={2}
+                                    d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"
+                                  />
+                                  <path
+                                    strokeLinecap="round"
+                                    strokeLinejoin="round"
+                                    strokeWidth={2}
+                                    d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"
+                                  />
+                                </svg>
+                                Details
+                              </button>
+                            </div>
+                          </div>
                         </div>
                       </div>
                     </div>
 
-                    {/* Room occupancy section with loading state */}
-                    <div className="mb-8">
+                    {/* Room occupancy section with loading state */}                    <div className="mb-8">
                       {loading && property.id === selectedProperty ? (
                         <div className="bg-white p-6 rounded-lg shadow flex items-center justify-center h-60" data-testid="room-occupancy-loading">
                           <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-indigo-500"></div>
@@ -247,14 +311,28 @@ const PropertiesPage = () => {
                           testId={`room-occupancy-${property.id}`}
                         />
                       ) : (
-                        <div className="bg-white p-6 rounded-lg shadow text-center" data-testid="no-rooms-message">
-                          <p className="text-gray-500 mb-4">No rooms found for this property</p>
-                          <button 
-                            className="text-sm bg-indigo-600 text-white py-2 px-4 rounded-md hover:bg-indigo-700 transition-colors"
-                            data-testid="add-rooms-button"
-                          >
-                            Add Rooms
-                          </button>
+                        <div className="bg-white p-6 rounded-lg shadow" data-testid="rooms-summary">
+                          <h3 className="text-lg font-medium text-gray-900 mb-4">Room Occupancy Summary</h3>
+                          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                            <div className="bg-indigo-50 p-4 rounded-lg">
+                              <p className="text-sm text-gray-600">Total Rooms</p>
+                              <p className="text-2xl font-bold text-indigo-700">{property.availableRooms || 0}</p>
+                            </div>
+                            <div className="bg-green-50 p-4 rounded-lg">
+                              <p className="text-sm text-gray-600">Available</p>
+                              <p className="text-2xl font-bold text-green-700">{property.availableRooms || 0}</p>
+                            </div>
+                            <div className="bg-amber-50 p-4 rounded-lg">
+                              <p className="text-sm text-gray-600">Occupied</p>
+                              <p className="text-2xl font-bold text-amber-700">0</p>
+                            </div>
+                          </div>
+                          <p className="text-sm text-gray-500 mt-4 text-center">
+                            {property.availableRooms && property.availableRooms > 0 ? 
+                              `All rooms in this property share the same configuration.` : 
+                              'No rooms have been added to this property yet.'
+                            }
+                          </p>
                         </div>
                       )}
                     </div>

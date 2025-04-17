@@ -281,12 +281,17 @@ export class BusinessService {
       return [];
     }
   }
-
   /**
    * Get list of hostels for a business
-   * @returns Promise with list of hostels
+   * @returns Promise with list of hostels with details
    */
-  static async getBusinessHostels(): Promise<{ id: string, name: string }[]> {
+  static async getBusinessHostels(): Promise<{ 
+    id: string; 
+    name: string;
+    location?: string;
+    imageUrl?: string;
+    availableRooms?: number;
+  }[]> {
     try {
       const currentUser = auth.currentUser;
       
@@ -307,13 +312,23 @@ export class BusinessService {
         return [];
       }
       
-      const hostels: { id: string, name: string }[] = [];
+      const hostels: { 
+        id: string; 
+        name: string; 
+        location?: string;
+        imageUrl?: string;
+        availableRooms?: number;
+      }[] = [];
       
       hostelsSnapshot.forEach((doc) => {
         const data = doc.data();
         hostels.push({
           id: doc.id,
-          name: data.name || "Unnamed Hostel"
+          name: data.name || "Unnamed Hostel",
+          location: data.location || "",
+          // Use the first image URL if available, otherwise undefined
+          imageUrl: data.imageUrls && data.imageUrls.length > 0 ? data.imageUrls[0] : undefined,
+          availableRooms: data.availableRooms || 0
         });
       });
       
