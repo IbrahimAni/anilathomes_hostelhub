@@ -21,15 +21,41 @@ export default function BusinessAgentsPage() {
     name: "",
     email: "",
     phone: "",
+  });  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [showInactive, setShowInactive] = useState(() => {
+    // Initialize from localStorage if available, otherwise default to false
+    if (typeof window !== 'undefined') {
+      const saved = localStorage.getItem('showInactiveAgents');
+      return saved ? JSON.parse(saved) : false;
+    }
+    return false;
   });
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [showInactive, setShowInactive] = useState(false);
-  const [showUnverified, setShowUnverified] = useState(false);
+  const [showUnverified, setShowUnverified] = useState(() => {
+    // Initialize from localStorage if available, otherwise default to false
+    if (typeof window !== 'undefined') {
+      const saved = localStorage.getItem('showUnverifiedAgents');
+      return saved ? JSON.parse(saved) : false;
+    }
+    return false;
+  });
   const [processingAgentId, setProcessingAgentId] = useState<string | null>(
     null
   );
-
   const router = useRouter();
+
+  // Save filter settings to localStorage when they change
+  useEffect(() => {
+    localStorage.setItem('showInactiveAgents', JSON.stringify(showInactive));
+  }, [showInactive]);
+
+  useEffect(() => {
+    localStorage.setItem('showUnverifiedAgents', JSON.stringify(showUnverified));
+  }, [showUnverified]);
+
+  // Navigate to agent detail page
+  const navigateToAgentDetail = (agentId: string) => {
+    router.push(`/dashboard/business/agents/${agentId}`);
+  };
 
   // move fetch logic into a named function
   const fetchAgents = async () => {
@@ -463,7 +489,17 @@ export default function BusinessAgentsPage() {
                 <tbody className="bg-white divide-y divide-gray-200">
                   {sortedAgents.map((agent) => (
                     <React.Fragment key={agent.agentId}>
-                      <tr className="hover:bg-gray-50">
+                      <tr 
+                        className="hover:bg-gray-50 cursor-pointer"
+                        onClick={(e) => {
+                          // Don't navigate if clicking on action buttons or expand button
+                          if ((e.target as Element).closest('button')) {
+                            return;
+                          }
+                          navigateToAgentDetail(agent.agentId);
+                        }}
+                        data-testid={`agent-row-${agent.agentId}`}
+                      >
                         <td className="px-6 py-4 whitespace-nowrap">
                           <div className="flex items-center">
                             <div className="flex-shrink-0 h-10 w-10 relative rounded-full overflow-hidden">
@@ -536,7 +572,10 @@ export default function BusinessAgentsPage() {
                           <div className="flex items-center justify-end gap-2">
                             {/* View/Hide Bookings Button */}
                             <button
-                              onClick={() => toggleAgentExpand(agent.agentId)}
+                              onClick={(e) => {
+                                e.stopPropagation(); // Prevent row click
+                                toggleAgentExpand(agent.agentId);
+                              }}
                               className={`inline-flex items-center px-2.5 py-1.5 border border-indigo-300 shadow-sm text-xs font-medium rounded text-indigo-700 bg-white hover:bg-indigo-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-all ${
                                 expandedAgents.includes(agent.agentId)
                                   ? "bg-indigo-50"
@@ -582,6 +621,7 @@ export default function BusinessAgentsPage() {
 
                             {/* Pay Commission Button */}
                             <button
+                              onClick={(e) => e.stopPropagation()} // Prevent row click
                               className={`inline-flex items-center px-2.5 py-1.5 border shadow-sm text-xs font-medium rounded focus:outline-none focus:ring-2 focus:ring-offset-2 transition-all ${
                                 agent.pendingCommission === 0
                                   ? "border-gray-300 text-gray-400 bg-gray-50 cursor-not-allowed"
@@ -615,9 +655,10 @@ export default function BusinessAgentsPage() {
                             {/* Activate/Deactivate Button */}
                             {agent.active !== false ? (
                               <button
-                                onClick={() =>
-                                  toggleAgentStatus(agent.agentId, false)
-                                }
+                                onClick={(e) => {
+                                  e.stopPropagation(); // Prevent row click
+                                  toggleAgentStatus(agent.agentId, false);
+                                }}
                                 disabled={processingAgentId === agent.agentId}
                                 className={`inline-flex items-center px-2.5 py-1.5 border border-red-300 shadow-sm text-xs font-medium rounded text-red-700 bg-white hover:bg-red-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 transition-all`}
                                 data-testid={`deactivate-agent-${agent.agentId}`}
@@ -669,9 +710,10 @@ export default function BusinessAgentsPage() {
                               </button>
                             ) : (
                               <button
-                                onClick={() =>
-                                  toggleAgentStatus(agent.agentId, true)
-                                }
+                                onClick={(e) => {
+                                  e.stopPropagation(); // Prevent row click
+                                  toggleAgentStatus(agent.agentId, true);
+                                }}
                                 disabled={processingAgentId === agent.agentId}
                                 className={`inline-flex items-center px-2.5 py-1.5 border border-green-300 shadow-sm text-xs font-medium rounded text-green-700 bg-white hover:bg-green-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 transition-all`}
                                 data-testid={`activate-agent-${agent.agentId}`}
