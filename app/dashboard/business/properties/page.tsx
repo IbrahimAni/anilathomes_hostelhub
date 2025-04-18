@@ -5,8 +5,7 @@ import { Tab } from '@headlessui/react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { auth } from "@/config/firebase";
 import { BusinessService } from '@/services';
-import { RoomData, AgentCommissionData } from '@/types/business';
-import RoomOccupancy from '@/components/dashboard/business/RoomOccupancy';
+import { AgentCommissionData } from '@/types/business';
 import AgentCommissions from '@/components/dashboard/business/AgentCommissions';
 import AddHostelModal from '@/components/dashboard/business/AddHostelModal';
 import EditHostelDrawer from '@/components/dashboard/business/EditHostelDrawer';
@@ -28,7 +27,6 @@ const PropertiesPage = () => {
     availableRooms?: number; 
   }[]>([]);
   const [selectedProperty, setSelectedProperty] = useState<string | null>(null);
-  const [roomsData, setRoomsData] = useState<RoomData[]>([]);
   const [agentsData, setAgentsData] = useState<AgentCommissionData[]>([]);
   const [isAddHostelModalOpen, setIsAddHostelModalOpen] = useState(false);
   const [isConfirmDeleteModalOpen, setIsConfirmDeleteModalOpen] = useState(false);
@@ -41,10 +39,6 @@ const PropertiesPage = () => {
   const fetchPropertyData = useCallback(async (propertyId: string) => {
     try {
       setLoading(true);
-      
-      // Fetch room occupancy data for the selected property
-      const rooms = await BusinessService.getRoomOccupancy(propertyId);
-      setRoomsData(rooms);
       
       // Fetch agent commission data
       const agents = await BusinessService.getAgentCommissions();
@@ -86,7 +80,7 @@ const PropertiesPage = () => {
       console.error("Error fetching properties:", error);
       setLoading(false);
     }
-  }, [router, fetchPropertyData]);
+  }, [router, fetchPropertyData, selectedParam]); // Added selectedParam to the dependency array
 
   // Add the missing useEffect hook to trigger initial data fetch
   useEffect(() => {
@@ -147,7 +141,6 @@ const PropertiesPage = () => {
           await fetchPropertyData(nextId);
         } else {
           // Clear data if none left
-          setRoomsData([]);
           setAgentsData([]);
         }
       }

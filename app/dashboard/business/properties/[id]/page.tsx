@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { auth } from "@/config/firebase";
 import { BusinessService } from "@/services";
@@ -25,6 +25,7 @@ interface HostelDetails {
     country: string;
   };
   imageUrls: string[];
+  images?: string[];
   price: string;
   pricePerYear: number;
   roomTypes: string[];
@@ -55,7 +56,7 @@ const HostelDetailsPage = () => {
   const [isDeleting, setIsDeleting] = useState(false);
 
   // Reusable fetch function to load hostel details, rooms, and agents
-  const fetchDetails = async () => {
+  const fetchDetails = useCallback(async () => {
     try {
       setLoading(true);
       const currentUser = auth.currentUser;
@@ -79,10 +80,13 @@ const HostelDetailsPage = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [hostelId, router]);
+
   useEffect(() => {
-    if (hostelId) fetchDetails();
-  }, [hostelId]);
+    if (hostelId) {
+      fetchDetails();
+    }
+  }, [hostelId, fetchDetails]);
 
   const handleDeleteClick = () => {
     setIsConfirmDeleteModalOpen(true);
@@ -264,7 +268,7 @@ const HostelDetailsPage = () => {
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
               {
                 [...new Set([...(Array.isArray(hostel.imageUrls) ? hostel.imageUrls : []),
-                  ...(Array.isArray((hostel as any).images) ? (hostel as any).images : [])])]
+                  ...(Array.isArray(hostel.images) ? hostel.images : [])])]
                   .filter((url) => url && url.trim() !== "" && !url.startsWith("blob:"))
                   .map((imageUrl, index) => (
                     <div key={index} className="relative h-48 rounded-lg overflow-hidden">
@@ -282,7 +286,7 @@ const HostelDetailsPage = () => {
               }
               {
                 [...new Set([...(Array.isArray(hostel.imageUrls) ? hostel.imageUrls : []),
-                  ...(Array.isArray((hostel as any).images) ? (hostel as any).images : [])])]
+                  ...(Array.isArray(hostel.images) ? hostel.images : [])])]
                   .filter((url) => url && url.trim() !== "" && !url.startsWith("blob:")).length === 0 && (
                   <div className="col-span-full bg-gray-200 h-48 flex items-center justify-center text-gray-500">
                     No images available

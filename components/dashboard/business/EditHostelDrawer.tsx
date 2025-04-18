@@ -103,32 +103,6 @@ const initialFormData: HostelFormData = {
   },
 };
 
-const commonAmenities = [
-  "Wi-Fi",
-  "Security",
-  "Water Supply",
-  "Electricity",
-  "Bathroom",
-  "Kitchen",
-  "Laundry",
-  "Study Room",
-  "TV Room",
-  "Cafeteria",
-  "Parking",
-  "Generator",
-  "Air Conditioning",
-];
-
-const roomTypeOptions = [
-  "Single",
-  "Self Contained",
-  "Room and Parllor Self Contained",
-  "Double",
-  "Dormitory",
-  "En-suite",
-  "Studio",
-];
-
 export default function EditHostelDrawer({
   isOpen,
   onClose,
@@ -153,7 +127,6 @@ export default function EditHostelDrawer({
   const [loading, setLoading] = useState(false);
   const [currentStep, setCurrentStep] = useState(1);
   const totalSteps = 5;
-  const [isDeleting, setIsDeleting] = useState<string[]>([]);
 
   // Fetch hostel details when the drawer is opened
   useEffect(() => {
@@ -349,36 +322,10 @@ export default function EditHostelDrawer({
   };
 
   const handleRemoveExistingImage = (imageUrl: string) => {
-    setIsDeleting((prev) => [...prev, imageUrl]);
-    
     setFormData((prev) => ({
       ...prev,
       existingImages: prev.existingImages.filter((url) => url !== imageUrl),
     }));
-    
-    setTimeout(() => {
-      setIsDeleting((prev) => prev.filter(url => url !== imageUrl));
-    }, 1000);
-  };
-
-  const handleToggleAmenity = (amenity: string) => {
-    setFormData((prev) => {
-      const amenities = [...prev.amenities];
-      if (amenities.includes(amenity)) {
-        return {
-          ...prev,
-          amenities: amenities.filter((a) => a !== amenity),
-        };
-      } else {
-        return {
-          ...prev,
-          amenities: [...amenities, amenity],
-        };
-      }
-    });
-  };
-  
-  const handleRoomTypeChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
   };
 
   const validateCurrentStep = () => {
