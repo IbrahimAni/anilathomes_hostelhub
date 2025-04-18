@@ -108,6 +108,8 @@ export interface AgentCommissionData {
   agentId: string;
   agentName: string;
   profileImage: string;
+  verified: boolean;
+  active: boolean;
   totalCommission: number;
   pendingCommission: number;
   paidCommission: number;

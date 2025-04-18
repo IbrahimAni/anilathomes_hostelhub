@@ -418,11 +418,12 @@ export class BusinessService {
             commissionStatus: commissionStatus
           });
         });
-        
-        agents.push({
+          agents.push({
           agentId: agentDoc.id,
           agentName: agentData.displayName || "Unknown Agent",
           profileImage: agentData.photoURL || "https://randomuser.me/api/portraits/lego/1.jpg",
+          verified: agentData.verified || false,
+          active: agentData.active !== undefined ? agentData.active : true, // Default to active if not specified
           totalCommission: totalCommission,
           pendingCommission: pendingCommission,
           paidCommission: paidCommission,
@@ -723,6 +724,64 @@ export class BusinessService {
       console.error("Error updating hostel:", error);
       throw error;
     }
+  }
+
+  /**
+   * Add a new agent associated with the current business
+   * @param agent Agent details to add
+   * @returns ID of the newly created agent document
+   */  static async addAgent(agent: { displayName: string; email: string; phone?: string; profileImage?: string; }): Promise<string> {
+    const currentUser = auth.currentUser;
+    if (!currentUser) {
+      throw new Error("User not authenticated");
+    }
+    const randomAvatarNumber = Math.floor(Math.random() * 9) + 1;
+    const newAgent = {
+      displayName: agent.displayName,
+      email: agent.email,
+      phone: agent.phone || "",
+      photoURL: agent.profileImage || `https://randomuser.me/api/portraits/lego/${randomAvatarNumber}.jpg`,
+      businessIds: [currentUser.uid],
+      verified: false,
+      active: true,
+      createdAt: Timestamp.now()
+    };
+    const agentRef = await addDoc(collection(db, "agents"), newAgent);
+    return agentRef.id;
+  }
+
+  /**
+   * Toggle the active status of an agent
+   * @param agentId ID of the agent to update
+   * @param active Whether the agent should be active or not
+   * @returns Promise indicating success
+   */
+  static async toggleAgentActiveStatus(agentId: string, active: boolean): Promise<boolean> {
+    const currentUser = auth.currentUser;
+    if (!currentUser) {
+      throw new Error("User not authenticated");
+    }
+
+    // Check if the agent belongs to the current business
+    const agentRef = doc(db, "agents", agentId);
+    const agentDoc = await getDoc(agentRef);
+
+    if (!agentDoc.exists()) {
+      throw new Error("Agent not found");
+    }
+
+    const agentData = agentDoc.data();
+    if (!agentData.businessIds?.includes(currentUser.uid)) {
+      throw new Error("Unauthorized - This agent is not associated with your business");
+    }
+
+    // Update the agent's active status
+    await updateDoc(agentRef, {
+      active: active,
+      updatedAt: Timestamp.now()
+    });
+
+    return true;
   }
 }
 
