@@ -13,6 +13,15 @@ import AgentCommissions from "@/components/dashboard/business/AgentCommissions";
 import { default as ConfirmationModal } from '@/components/common/ConfirmationModal';
 import EditHostelDrawer from '@/components/dashboard/business/EditHostelDrawer';
 
+// Define a type for business and assigned agents
+interface BusinessAgent {
+  agentId: string;
+  agentName: string;
+  profileImage?: string;
+  verified: boolean;
+  active: boolean;
+}
+
 interface HostelDetails {
   id: string;
   name: string;
@@ -54,6 +63,13 @@ const HostelDetailsPage = () => {
   const [isConfirmDeleteModalOpen, setIsConfirmDeleteModalOpen] =
     useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
+  const [businessAgents, setBusinessAgents] = useState<BusinessAgent[]>([]);
+  const [assignedAgents, setAssignedAgents] = useState<BusinessAgent[]>([]);
+  const [isAddAgentModalOpen, setIsAddAgentModalOpen] = useState(false);
+  const [selectedAgent, setSelectedAgent] = useState('');
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isRemoveAgentModalOpen, setIsRemoveAgentModalOpen] = useState(false);
+  const [agentToRemove, setAgentToRemove] = useState<{id: string, name: string} | null>(null);
 
   // Reusable fetch function to load hostel details, rooms, and agents
   const fetchDetails = useCallback(async () => {
@@ -68,12 +84,12 @@ const HostelDetailsPage = () => {
       setHostel(hostelDetails);
       const rooms = await BusinessService.getRoomOccupancy(hostelId);
       setRoomsData(rooms);
-      const agents = await BusinessService.getAgentCommissions();
-      // Filter agents who have bookings for this hostel by matching the hostel name
-      const filtered = agents.filter(agent =>
-        agent.bookings.some(b => b.hostelName === hostelDetails.name)
-      );
-      setAgentsData(filtered);
+      // fetch assigned agents for this property
+      const assigned = await BusinessService.getAssignedAgents(hostelId);
+      setAssignedAgents(assigned);
+      // Fetch agent commission data for this property
+      const commissions = await BusinessService.getAgentCommissions(hostelId);
+      setAgentsData(commissions);
     } catch (error) {
       console.error('Error fetching hostel details:', error);
       toast.error('Failed to load hostel details');
@@ -85,6 +101,8 @@ const HostelDetailsPage = () => {
   useEffect(() => {
     if (hostelId) {
       fetchDetails();
+      // fetch business's active, verified agents
+      BusinessService.getBusinessAgents().then(setBusinessAgents);
     }
   }, [hostelId, fetchDetails]);
 
@@ -92,6 +110,9 @@ const HostelDetailsPage = () => {
     setIsConfirmDeleteModalOpen(true);
   };
   const handleEditClick = () => setIsEditDrawerOpen(true);
+  const handleAssignClick = () => {
+    setIsAddAgentModalOpen(true);
+  };
 
   const handleDeleteConfirm = async () => {
     if (!hostel) return;
@@ -107,6 +128,22 @@ const HostelDetailsPage = () => {
     } finally {
       setIsDeleting(false);
       setIsConfirmDeleteModalOpen(false);
+    }
+  };
+  const handleAssignConfirm = async () => {
+    if (!selectedAgent) return;
+    setIsSubmitting(true);
+    try {
+      await BusinessService.assignAgentToHostel(hostelId, selectedAgent);
+      toast.success('Agent assigned successfully');
+      const assigned = await BusinessService.getAssignedAgents(hostelId);
+      setAssignedAgents(assigned);
+      setIsAddAgentModalOpen(false);
+      setSelectedAgent('');
+    } catch {
+      toast.error('Failed to assign agent');
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -144,7 +181,31 @@ const HostelDetailsPage = () => {
         </Link>
       </div>
     );
-  }
+  }    // Handler for initiating the remove agent process
+    const handleRemoveAgentClick = (agent: {agentId: string, agentName: string}) => {
+        setAgentToRemove({id: agent.agentId, name: agent.agentName});
+        setIsRemoveAgentModalOpen(true);
+    };
+    
+    // Handler for confirming agent removal
+    const handleRemoveAgentConfirm = async (): Promise<void> => {
+        if (!agentToRemove) return;
+        
+        try {
+            await BusinessService.removeAgentFromHostel(hostelId, agentToRemove.id);
+            toast.success("Agent removed successfully");
+
+            // Refresh the assigned agents list
+            const updatedAgents = await BusinessService.getAssignedAgents(hostelId);
+            setAssignedAgents(updatedAgents);
+        } catch (error) {
+            console.error("Failed to remove agent:", error);
+            toast.error("Failed to remove agent. Please try again.");
+        } finally {
+            setIsRemoveAgentModalOpen(false);
+            setAgentToRemove(null);
+        }
+    }
 
   return (
     <div>
@@ -657,7 +718,7 @@ const HostelDetailsPage = () => {
                       strokeLinecap="round"
                       strokeLinejoin="round"
                       strokeWidth={2}
-                      d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"
+                      d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5a1 1 0 01-1 1h-2a1 1 0 01-1-1z"
                     />
                   </svg>
                 </div>
@@ -770,7 +831,7 @@ const HostelDetailsPage = () => {
                       strokeLinecap="round"
                       strokeLinejoin="round"
                       strokeWidth={2}
-                      d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"
+                      d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3H17.5"
                     />
                   </svg>
                 </div>
@@ -781,15 +842,29 @@ const HostelDetailsPage = () => {
             )}
           </div>
         )}
-      </div>{" "}
-      {/* Assigned Agents Section */}
+      </div>{" "}      {/* Assigned Agents Section */}
       <div className="mb-8">
         <div className="flex justify-between items-center mb-4">
-          <h2 className="text-lg font-semibold text-gray-800">
+          <h2 className="text-lg font-semibold text-gray-800 flex items-center">
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              className="h-5 w-5 text-indigo-500 mr-2"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"
+              />
+            </svg>
             Assigned Agents
           </h2>
           <button
-            className="px-3 py-2 bg-indigo-600 text-white rounded-md text-sm font-medium hover:bg-indigo-700 transition-colors flex items-center"
+            onClick={handleAssignClick}
+            className="px-3 py-2 bg-indigo-600 text-white rounded-md text-sm font-medium hover:bg-indigo-700 transition-colors flex items-center shadow-sm"
             data-testid="add-agent-button"
           >
             <svg
@@ -809,30 +884,99 @@ const HostelDetailsPage = () => {
             Add Agent
           </button>
         </div>
-        <div className="bg-white p-6 rounded-lg shadow">
-          {/* Always show empty state since we're setting agentsData to [] */}
-          <div className="text-center py-8" data-testid="no-agents-message">
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              className="h-12 w-12 mx-auto text-gray-400 mb-4"
-              fill="none"
-              viewBox="0 0 24 24"
-              stroke="currentColor"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"
-              />
-            </svg>
-            <p className="text-gray-500">
-              No agents are currently assigned to this property
-            </p>
-            <p className="text-sm text-gray-400 mt-1">
-              Assign agents to help manage and market this property
-            </p>
-          </div>
+        <div className="bg-gradient-to-r from-indigo-50 to-blue-50 p-6 rounded-lg shadow-lg">
+          {assignedAgents.length > 0 ? (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              {assignedAgents.map(agent => (
+                <div key={agent.agentId} className="bg-white rounded-lg shadow-md overflow-hidden border border-indigo-100 hover:shadow-lg transition-shadow duration-300 relative group">
+                  {/* Status badges - top right */}
+                  <div className="absolute top-3 right-3 flex space-x-1">
+                    <div className={`flex items-center px-2 py-1 rounded-full text-xs font-medium ${agent.active ? 'bg-green-100 text-green-800' : 'bg-gray-200 text-gray-700'}`}>
+                      <span className={`inline-block h-2 w-2 rounded-full mr-1 ${agent.active ? 'bg-green-500' : 'bg-gray-500'}`}></span>
+                      {agent.active ? 'Active' : 'Inactive'}
+                    </div>
+                    {!agent.verified && (
+                      <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800">
+                        Unverified
+                      </span>
+                    )}
+                  </div>
+                  
+                  {/* Remove button - top right, showing on hover */}
+                  <button
+                    onClick={() => handleRemoveAgentClick(agent)}
+                    className="absolute top-2 left-2 bg-red-100 p-1 rounded-full opacity-0 group-hover:opacity-100 transition-opacity duration-200 hover:bg-red-200"
+                    title="Remove agent"
+                  >
+                    <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 text-red-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                  </button>                    {/* Agent main info - ultra-compact */}
+                  <div className="flex flex-row items-center p-2 space-x-3">
+                    <div className="relative flex-shrink-0">
+                      <Image
+                        className="h-10 w-10 rounded-full object-cover border border-indigo-100"
+                        src={agent.profileImage || '/default-avatar.png'}
+                        alt={agent.agentName}
+                        width={40}
+                        height={40}
+                        priority={true}
+                      />
+                      {agent.active && agent.verified && (
+                        <span className="absolute bottom-0 right-0 h-2 w-2 bg-green-500 rounded-full border border-white"></span>
+                      )}
+                    </div>
+                      <div className="flex-grow min-w-0">
+                      <h3 className="text-xs font-medium text-gray-900 truncate">{agent.agentName}</h3>
+                      <div
+                        className="text-xxs text-gray-500 font-mono flex items-center cursor-pointer hover:text-indigo-600"
+                        onClick={() => {
+                          navigator.clipboard.writeText(agent.agentId);
+                          toast.success('Agent ID copied to clipboard');
+                        }}
+                        title="Click to copy ID"
+                      >
+                        <span>ID: {agent.agentId}</span>
+                        <svg xmlns="http://www.w3.org/2000/svg" className="h-3 w-3 ml-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 10v-5a1 1 0 011-1h2a1 1 0 011 1v5a1 1 0 01-1 1h-2a1 1 0 01-1-1z" />
+                        </svg>
+                      </div>
+                    </div>
+                    
+                    {/* Remove button inline */}
+                    <button
+                      onClick={() => handleRemoveAgentClick(agent)}
+                      className="p-1 text-red-600 hover:bg-red-50 rounded-full"
+                      title="Remove agent"
+                    >
+                      <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                      </svg>
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <div className="bg-white rounded-lg border border-dashed border-indigo-300 p-8 text-center" data-testid="no-agents-message">
+              <div className="bg-indigo-50 mx-auto h-16 w-16 rounded-full flex items-center justify-center mb-4">
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-8 w-8 text-indigo-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+                </svg>
+              </div>
+              <h3 className="text-lg font-medium text-gray-900 mb-1">No Agents Assigned</h3>
+              <p className="text-sm text-gray-500 mb-4">This property doesn&apos;t have any agents assigned to it yet.</p>
+              <button
+                onClick={handleAssignClick}
+                className="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+                </svg>
+                Add Your First Agent
+              </button>
+            </div>
+          )}
         </div>
       </div>
       {/* Agent Commissions Section */}
@@ -883,8 +1027,118 @@ const HostelDetailsPage = () => {
           fetchDetails();
         }}
       />
-    </div>
-  );
-};
+      
+      {/* Remove Agent Confirmation Modal */}
+      <ConfirmationModal
+        isOpen={isRemoveAgentModalOpen}
+        onClose={() => {
+          setIsRemoveAgentModalOpen(false);
+          setAgentToRemove(null);
+        }}
+        onConfirm={handleRemoveAgentConfirm}
+        title="Remove Agent"
+        message={`Are you sure you want to remove ${agentToRemove?.name || 'this agent'} from "${hostel?.name}"?`}
+        confirmButtonText="Remove"
+        cancelButtonText="Cancel"
+        danger={true}
+      />
+      
+      {/* Add Agent Modal */}
+      {isAddAgentModalOpen && (
+        <div className="fixed inset-0 bg-gray-600 bg-opacity-75 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg shadow-xl max-w-md w-full mx-4">
+            <div className="bg-indigo-600 px-6 py-4 rounded-t-lg">
+              <div className="flex items-center justify-between">
+                <h3 className="text-lg font-semibold text-white">Assign Agent to Property</h3>
+                <button 
+                  onClick={() => setIsAddAgentModalOpen(false)}
+                  className="text-white hover:text-gray-200 focus:outline-none"
+                >
+                  <svg className="h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                </button>
+              </div>
+            </div>
+            
+            <div className="p-6">
+              <p className="text-sm text-gray-500 mb-4">
+                Select an agent to assign to {hostel?.name}. The agent will be able to book students for this property.
+              </p>
+              
+              {businessAgents.length > 0 ? (
+                <div className="mb-4">
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Select Agent</label>
+                  <div className="relative">
+                    <select
+                      value={selectedAgent}
+                      onChange={(e) => setSelectedAgent(e.target.value)}
+                      className="block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 rounded-md"
+                    >                      <option value="">-- Select an agent --</option>
+                      {businessAgents
+                        .filter(agent => 
+                          // Only show verified agents that aren't already assigned
+                          agent.verified && 
+                          !assignedAgents.some(assigned => assigned.agentId === agent.agentId)
+                        )
+                        .map(agent => (
+                          <option key={agent.agentId} value={agent.agentId}>
+                            {agent.agentName}
+                          </option>
+                        ))}
+                    </select>
+                    <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-700">
+                      <svg className="h-4 w-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                        <path fillRule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clipRule="evenodd" />
+                      </svg>
+                    </div>
+                  </div>
+                  
+                  {businessAgents.filter(agent => !assignedAgents.some(assigned => assigned.agentId === agent.agentId)).length === 0 && (
+                    <p className="mt-2 text-sm text-amber-600">All available agents have already been assigned to this property.</p>
+                  )}
+                </div>
+              ) : (
+                <div className="bg-yellow-50 border border-yellow-100 rounded-md p-4 mb-4">
+                  <div className="flex">
+                    <div className="flex-shrink-0">
+                      <svg className="h-5 w-5 text-yellow-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                        <path fillRule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
+                      </svg>
+                    </div>
+                    <div className="ml-3">
+                      <p className="text-sm text-yellow-700">
+                        No agents available. Add agents in the Agents page first.
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              )}
+              
+              <div className="mt-6 flex justify-end space-x-3">
+                <button
+                  type="button"
+                  onClick={() => setIsAddAgentModalOpen(false)}
+                  className="py-2 px-4 border border-gray-300 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="button"
+                  onClick={handleAssignConfirm}
+                  disabled={!selectedAgent || isSubmitting}
+                  className={`py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white 
+                    ${!selectedAgent ? 'bg-indigo-300 cursor-not-allowed' : 'bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500'}`}
+                >
+                  {isSubmitting ? 'Assigning...' : 'Assign Agent'}
+                 </button>
+               </div>
+             </div>
+           </div>
+         </div>
+       )}
+     </div>
+   )
+ };
 
 export default HostelDetailsPage;

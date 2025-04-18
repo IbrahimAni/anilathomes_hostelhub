@@ -61,7 +61,24 @@ export default function BusinessAgentsPage() {
   const fetchAgents = async () => {
     setLoading(true);
     try {
-      const data = await BusinessService.getAgentCommissions(100);
+      // Get all business agents regardless of commissions
+      const allAgents = await BusinessService.getBusinessAgents(100);
+      
+      // Map to expected format if needed
+      const data = allAgents.map(agent => ({
+        agentId: agent.agentId,
+        agentName: agent.agentName,
+        profileImage: agent.profileImage || 'https://randomuser.me/api/portraits/lego/1.jpg',
+        verified: agent.verified,
+        active: agent.active,
+        totalCommission: 0,
+        pendingCommission: 0,
+        paidCommission: 0,
+        bookingsCount: 0,
+        lastBookingDate: 'N/A',
+        bookings: []
+      }));
+      
       setAgents(data);
     } catch (e) {
       console.error(e);
