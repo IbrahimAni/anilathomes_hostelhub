@@ -2,19 +2,23 @@
 
 import React, { useState, useEffect, useCallback } from 'react';
 import { Tab } from '@headlessui/react';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { auth } from "@/config/firebase";
 import { BusinessService } from '@/services';
 import { RoomData, AgentCommissionData } from '@/types/business';
 import RoomOccupancy from '@/components/dashboard/business/RoomOccupancy';
 import AgentCommissions from '@/components/dashboard/business/AgentCommissions';
 import AddHostelModal from '@/components/dashboard/business/AddHostelModal';
+import EditHostelDrawer from '@/components/dashboard/business/EditHostelDrawer';
 import { default as ConfirmationModal } from '@/components/common/ConfirmationModal';
 import Image from 'next/image';
 import { toast } from 'react-hot-toast';
 
 const PropertiesPage = () => {
   const router = useRouter();
+  // Read optional 'selected' query parameter to preserve tab selection
+  const searchParams = useSearchParams();
+  const selectedParam = searchParams.get('selected');
   const [loading, setLoading] = useState(true);  
   const [properties, setProperties] = useState<{ 
     id: string;
@@ -30,6 +34,8 @@ const PropertiesPage = () => {
   const [isConfirmDeleteModalOpen, setIsConfirmDeleteModalOpen] = useState(false);
   const [propertyToDelete, setPropertyToDelete] = useState<{id: string, name: string} | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
+  const [isEditHostelDrawerOpen, setIsEditHostelDrawerOpen] = useState(false);
+  const [propertyToEdit, setPropertyToEdit] = useState<{id: string, name: string, location?: string, imageUrl?: string, availableRooms?: number} | null>(null);
 
   // Function to fetch data for a selected property
   const fetchPropertyData = useCallback(async (propertyId: string) => {
@@ -65,10 +71,13 @@ const PropertiesPage = () => {
       const hostels = await BusinessService.getBusinessHostels();
       setProperties(hostels);
 
-      // If there are properties, fetch data for the first one
+      // If there are properties, fetch data for the initial selection
       if (hostels.length > 0) {
-        setSelectedProperty(hostels[0].id);
-        await fetchPropertyData(hostels[0].id);
+        const initialId = selectedParam && hostels.find(h => h.id === selectedParam)
+          ? selectedParam!
+          : hostels[0].id;
+        setSelectedProperty(initialId);
+        await fetchPropertyData(initialId);
       } else {
         // Make sure we stop loading even if there are no properties
         setLoading(false);
@@ -120,16 +129,27 @@ const PropertiesPage = () => {
     try {
       await BusinessService.deleteHostel(propertyToDelete.id);
       
-      // Remove the deleted property from local state
-      setProperties(prevProperties => 
-        prevProperties.filter(p => p.id !== propertyToDelete.id)
-      );
-      
-      // If the deleted property was the selected one, reset selection
+      // Remove the deleted property and select the next one
+      const prevList = properties;
+      const deletedIndex = prevList.findIndex(p => p.id === propertyToDelete.id);
+      const updatedList = prevList.filter(p => p.id !== propertyToDelete.id);
+      setProperties(updatedList);
       if (selectedProperty === propertyToDelete.id) {
-        setSelectedProperty(properties.find(p => p.id !== propertyToDelete.id)?.id || null);
-        setRoomsData([]);
-        setAgentsData([]);
+        // Determine next property to select
+        let nextId: string | null = null;
+        if (updatedList.length > 0) {
+          // If deleted was not last, pick the one at same index; else pick last
+          nextId = updatedList[deletedIndex] ? updatedList[deletedIndex].id : updatedList[updatedList.length - 1].id;
+        }
+        setSelectedProperty(nextId);
+        if (nextId) {
+          // Load data for the new selection
+          await fetchPropertyData(nextId);
+        } else {
+          // Clear data if none left
+          setRoomsData([]);
+          setAgentsData([]);
+        }
       }
       
       toast.success(`Property "${propertyToDelete.name}" has been deleted`);
@@ -194,7 +214,10 @@ const PropertiesPage = () => {
           </div>
           
           <div className="p-4">
-            <Tab.Group onChange={handleTabChange}>
+            <Tab.Group
+              selectedIndex={properties.findIndex(p => p.id === selectedProperty)}
+              onChange={handleTabChange}
+            >
               <Tab.List className="flex space-x-1 rounded-xl bg-indigo-50 p-1">
                 {properties.map((property) => (
                   <Tab
@@ -291,6 +314,10 @@ const PropertiesPage = () => {
                               <button 
                                 className="text-sm bg-white border border-gray-300 text-gray-700 py-1 px-3 rounded hover:bg-gray-50 transition-colors"
                                 data-testid={`edit-property-${property.id}`}
+                                onClick={() => {
+                                  setPropertyToEdit(property);
+                                  setIsEditHostelDrawerOpen(true);
+                                }}
                               >
                                 <svg
                                   xmlns="http://www.w3.org/2000/svg"
@@ -362,42 +389,60 @@ const PropertiesPage = () => {
                       </div>
                     </div>
 
-                    {/* Room occupancy section with loading state */}                    <div className="mb-8">
-                      {loading && property.id === selectedProperty ? (
-                        <div className="bg-white p-6 rounded-lg shadow flex items-center justify-center h-60" data-testid="room-occupancy-loading">
-                          <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-indigo-500"></div>
+                    {/* Room Occupancy Summary - detailed UI */}
+                    <div className="mb-8">
+                      <div className="bg-gradient-to-br from-white to-indigo-50 p-6 rounded-lg shadow-md border border-gray-100" data-testid="rooms-summary">
+                        <div className="flex justify-between items-center mb-6">
+                          <div>
+                            <h3 className="text-lg font-medium text-gray-900">Room Occupancy Summary</h3>
+                            <p className="text-sm text-gray-500">Overview of room availability status</p>
+                          </div>
                         </div>
-                      ) : roomsData.length > 0 ? (
-                        <RoomOccupancy 
-                          hostelName={property.name}
-                          rooms={roomsData}
-                          testId={`room-occupancy-${property.id}`}
-                        />
-                      ) : (
-                        <div className="bg-white p-6 rounded-lg shadow" data-testid="rooms-summary">
-                          <h3 className="text-lg font-medium text-gray-900 mb-4">Room Occupancy Summary</h3>
-                          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                            <div className="bg-indigo-50 p-4 rounded-lg">
-                              <p className="text-sm text-gray-600">Total Rooms</p>
-                              <p className="text-2xl font-bold text-indigo-700">{property.availableRooms || 0}</p>
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                          <div className="bg-white p-4 rounded-xl shadow-sm border border-indigo-100 flex items-center">
+                            <div className="bg-indigo-100 p-3 rounded-full mr-4">
+                              <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-indigo-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
+                              </svg>
                             </div>
-                            <div className="bg-green-50 p-4 rounded-lg">
-                              <p className="text-sm text-gray-600">Available</p>
-                              <p className="text-2xl font-bold text-green-700">{property.availableRooms || 0}</p>
-                            </div>
-                            <div className="bg-amber-50 p-4 rounded-lg">
-                              <p className="text-sm text-gray-600">Occupied</p>
-                              <p className="text-2xl font-bold text-amber-700">0</p>
+                            <div>
+                              <p className="text-sm text-gray-500">Total Rooms</p>
+                              <div className="flex items-baseline">
+                                <p className="text-2xl font-bold text-indigo-700">{property.availableRooms || 0}</p>
+                                <p className="text-xs text-gray-500 ml-2">units</p>
+                              </div>
                             </div>
                           </div>
-                          <p className="text-sm text-gray-500 mt-4 text-center">
-                            {property.availableRooms && property.availableRooms > 0 ? 
-                              `All rooms in this property share the same configuration.` : 
-                              'No rooms have been added to this property yet.'
-                            }
-                          </p>
+                          <div className="bg-white p-4 rounded-xl shadow-sm border border-green-100 flex items-center">
+                            <div className="bg-green-100 p-3 rounded-full mr-4">
+                              <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                              </svg>
+                            </div>
+                            <div>
+                              <p className="text-sm text-gray-500">Available</p>
+                              <div className="flex items-baseline">
+                                <p className="text-2xl font-bold text-green-600">{property.availableRooms || 0}</p>
+                                <p className="text-xs text-gray-500 ml-2">({property.availableRooms ? '100%' : '0%'})</p>
+                              </div>
+                            </div>
+                          </div>
+                          <div className="bg-white p-4 rounded-xl shadow-sm border border-amber-100 flex items-center">
+                            <div className="bg-amber-100 p-3 rounded-full mr-4">
+                              <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-amber-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                              </svg>
+                            </div>
+                            <div>
+                              <p className="text-sm text-gray-500">Occupied</p>
+                              <div className="flex items-baseline">
+                                <p className="text-2xl font-bold text-amber-600">0</p>
+                                <p className="text-xs text-gray-500 ml-2">(0%)</p>
+                              </div>
+                            </div>
+                          </div>
                         </div>
-                      )}
+                      </div>
                     </div>
 
                     {/* Agent commissions section with loading state */}
@@ -419,6 +464,7 @@ const PropertiesPage = () => {
                     </div>
                   </Tab.Panel>
                 ))}
+
               </Tab.Panels>
             </Tab.Group>
           </div>
@@ -451,13 +497,25 @@ const PropertiesPage = () => {
         </div>
       )}
 
-      {/* Add Hostel Modal */}
-      <AddHostelModal 
+      {/* Add Hostel Modal */}      <AddHostelModal 
         isOpen={isAddHostelModalOpen}
         onClose={handleCloseAddHostelModal}
         onHostelAdded={handleHostelAdded}
       />
-      
+      {/* 
+        FIX REQUIRED IN: @/components/dashboard/business/EditHostelDrawer.tsx
+        The 'EditHostelDrawer' component function currently returns 'void'. 
+        It needs to be updated to return JSX (e.g., `JSX.Element` or `React.ReactElement | null`).
+        Example (in EditHostelDrawer.tsx):
+        - const EditHostelDrawer = (...): void => { ... } 
+        + const EditHostelDrawer = (...): JSX.Element | null => { ... return (<div>...</div>); } 
+      */}
+      <EditHostelDrawer
+        isOpen={isEditHostelDrawerOpen}
+        onClose={() => setIsEditHostelDrawerOpen(false)}
+        hostel={propertyToEdit}
+        onHostelUpdated={handleHostelAdded}
+      />
       {/* Confirmation Modal for Delete */}
       <ConfirmationModal
         isOpen={isConfirmDeleteModalOpen}

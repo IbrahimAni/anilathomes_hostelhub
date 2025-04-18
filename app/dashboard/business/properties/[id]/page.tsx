@@ -10,7 +10,8 @@ import { toast } from "react-hot-toast";
 import Link from "next/link";
 import RoomOccupancy from "@/components/dashboard/business/RoomOccupancy";
 import AgentCommissions from "@/components/dashboard/business/AgentCommissions";
-import { default as ConfirmationModal } from "@/components/common/ConfirmationModal";
+import { default as ConfirmationModal } from '@/components/common/ConfirmationModal';
+import EditHostelDrawer from '@/components/dashboard/business/EditHostelDrawer';
 
 interface HostelDetails {
   id: string;
@@ -43,6 +44,8 @@ const HostelDetailsPage = () => {
   const params = useParams();
   const router = useRouter();
   const hostelId = params.id as string;
+  // State for opening edit drawer
+  const [isEditDrawerOpen, setIsEditDrawerOpen] = useState(false);
   const [loading, setLoading] = useState(true);
   const [hostel, setHostel] = useState<HostelDetails | null>(null);
   const [roomsData, setRoomsData] = useState<RoomData[]>([]);
@@ -50,46 +53,41 @@ const HostelDetailsPage = () => {
   const [isConfirmDeleteModalOpen, setIsConfirmDeleteModalOpen] =
     useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
-  useEffect(() => {
-    const fetchHostelDetails = async () => {
-      try {
-        setLoading(true);
-        // Check if user is authenticated
-        const currentUser = auth.currentUser;
-        if (!currentUser) {
-          router.push("/login");
-          return;
-        }
 
-        // Fetch the hostel details
-        const hostelDetails = await BusinessService.getHostelDetails(hostelId);
-        setHostel(hostelDetails);
-
-        // Fetch room occupancy data
-        const rooms = await BusinessService.getRoomOccupancy(hostelId);
-        setRoomsData(rooms);        // Fetch agent commission data for this specific hostel
-        const agents = await BusinessService.getAgentCommissions();
-        // Filter agents who have bookings for this hostel by matching the hostel name
-        const hostelAgents = agents.filter(agent => 
-          agent.bookings.some(booking => booking.hostelName === hostelDetails.name)
-        );
-        setAgentsData(hostelAgents);
-      } catch (error) {
-        console.error("Error fetching hostel details:", error);
-        toast.error("Failed to load hostel details");
-      } finally {
-        setLoading(false);
+  // Reusable fetch function to load hostel details, rooms, and agents
+  const fetchDetails = async () => {
+    try {
+      setLoading(true);
+      const currentUser = auth.currentUser;
+      if (!currentUser) {
+        router.push('/login');
+        return;
       }
-    };
-
-    if (hostelId) {
-      fetchHostelDetails();
+      const hostelDetails = await BusinessService.getHostelDetails(hostelId) as HostelDetails;
+      setHostel(hostelDetails);
+      const rooms = await BusinessService.getRoomOccupancy(hostelId);
+      setRoomsData(rooms);
+      const agents = await BusinessService.getAgentCommissions();
+      // Filter agents who have bookings for this hostel by matching the hostel name
+      const filtered = agents.filter(agent =>
+        agent.bookings.some(b => b.hostelName === hostelDetails.name)
+      );
+      setAgentsData(filtered);
+    } catch (error) {
+      console.error('Error fetching hostel details:', error);
+      toast.error('Failed to load hostel details');
+    } finally {
+      setLoading(false);
     }
-  }, [hostelId, router]);
+  };
+  useEffect(() => {
+    if (hostelId) fetchDetails();
+  }, [hostelId]);
 
   const handleDeleteClick = () => {
     setIsConfirmDeleteModalOpen(true);
   };
+  const handleEditClick = () => setIsEditDrawerOpen(true);
 
   const handleDeleteConfirm = async () => {
     if (!hostel) return;
@@ -149,7 +147,7 @@ const HostelDetailsPage = () => {
       {/* Back Button */}
       <div className="mb-6">
         <Link
-          href="/dashboard/business/properties"
+          href={`/dashboard/business/properties?selected=${hostel.id}`}
           className="inline-flex items-center text-indigo-600 hover:text-indigo-800"
           data-testid="back-to-properties"
         >
@@ -210,6 +208,7 @@ const HostelDetailsPage = () => {
             {/* Action Buttons (Right Side) */}
             <div className="flex items-center space-x-2">
               <button
+                onClick={handleEditClick}
                 className="text-sm bg-white border border-gray-300 text-gray-700 py-1.5 px-4 rounded-full shadow-sm hover:bg-gray-50 transition-colors flex items-center"
                 data-testid="edit-property-button"
               >
@@ -263,36 +262,33 @@ const HostelDetailsPage = () => {
               Property Images
             </h2>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-              {hostel.imageUrls &&
-                Array.isArray(hostel.imageUrls) &&
-                hostel.imageUrls.length > 0 &&
-                hostel.imageUrls
+              {
+                [...new Set([...(Array.isArray(hostel.imageUrls) ? hostel.imageUrls : []),
+                  ...(Array.isArray((hostel as any).images) ? (hostel as any).images : [])])]
                   .filter((url) => url && url.trim() !== "" && !url.startsWith("blob:"))
                   .map((imageUrl, index) => (
-                    <div
-                      key={index}
-                      className="relative h-48 rounded-lg overflow-hidden"
-                    >
+                    <div key={index} className="relative h-48 rounded-lg overflow-hidden">
                       <Image
                         src={imageUrl}
                         alt=""
                         fill
-                        priority={index === 0} // Add priority to first image for LCP optimization
+                        priority={index === 0}
                         sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
                         className="object-cover"
                         data-testid={`hostel-image-${index}`}
                       />
                     </div>
-                  ))}
-
-              {(!hostel.imageUrls ||
-                !Array.isArray(hostel.imageUrls) ||
-                hostel.imageUrls.length === 0 ||
-                hostel.imageUrls.filter((url) => url && url.trim() !== "" && !url.startsWith("blob:")).length === 0) && (
-                <div className="col-span-full bg-gray-200 h-48 flex items-center justify-center text-gray-500">
-                  No images available
-                </div>
-              )}
+                  ))
+              }
+              {
+                [...new Set([...(Array.isArray(hostel.imageUrls) ? hostel.imageUrls : []),
+                  ...(Array.isArray((hostel as any).images) ? (hostel as any).images : [])])]
+                  .filter((url) => url && url.trim() !== "" && !url.startsWith("blob:")).length === 0 && (
+                  <div className="col-span-full bg-gray-200 h-48 flex items-center justify-center text-gray-500">
+                    No images available
+                  </div>
+                )
+              }
             </div>
           </div>
           {/* Basic Info */}
@@ -374,7 +370,7 @@ const HostelDetailsPage = () => {
                           strokeLinecap="round"
                           strokeLinejoin="round"
                           strokeWidth={1.5}
-                          d="M8.111 16.404a5.5 5.5 0 017.778 0M12 20h.01m-7.08-7.071c3.904-3.905 10.236-3.905 14.141 0M1.394 9.393c5.857-5.857 15.355-5.857 21.213 0"
+                          d="M8.111 16.404a5.5 5.5 0 007.778 0M12 20h.01m-7.08-7.071c3.904-3.905 10.236-3.905 14.141 0M1.394 9.393c5.857-5.857 15.355-5.857 21.213 0"
                         />
                       );
                     } else if (amenity.toLowerCase().includes('security')) {
@@ -437,7 +433,7 @@ const HostelDetailsPage = () => {
                           strokeLinecap="round"
                           strokeLinejoin="round"
                           strokeWidth={1.5}
-                          d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"
+                          d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v14a2 2 0 002 2z"
                         />
                       );
                     } else if (amenity.toLowerCase().includes('air conditioning') || amenity.toLowerCase().includes('ac')) {
@@ -638,32 +634,9 @@ const HostelDetailsPage = () => {
             className="bg-gradient-to-br from-white to-indigo-50 p-6 rounded-lg shadow-md border border-gray-100"
             data-testid="rooms-summary"
           >
-            <div className="flex justify-between items-center mb-6">
-              <div>
-                <h3 className="text-lg font-medium text-gray-900">
-                  Room Occupancy Summary
-                </h3>
-                <p className="text-sm text-gray-500">
-                  Overview of room availability status
-                </p>
-              </div>
-              <button className="px-3 py-1 bg-indigo-100 hover:bg-indigo-200 text-indigo-700 text-sm rounded-full flex items-center transition-colors">
-                <svg
-                  xmlns="http://www.w3.org/2000/svg"
-                  className="h-4 w-4 mr-1"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                  stroke="currentColor"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M12 6v6m0 0v6m0-6h6m-6 0H6"
-                  />
-                </svg>
-                Add Room Detail
-              </button>
+            <div className="mb-6">
+              <h3 className="text-lg font-medium text-gray-900">Room Occupancy Summary</h3>
+              <p className="text-sm text-gray-500">Overview of room availability status</p>
             </div>
             
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -889,6 +862,22 @@ const HostelDetailsPage = () => {
         confirmButtonText={isDeleting ? "Deleting..." : "Delete"}
         cancelButtonText="Cancel"
         danger={true}
+      />
+      {/* Edit Hostel Drawer */}
+      <EditHostelDrawer
+        isOpen={isEditDrawerOpen}
+        onClose={() => setIsEditDrawerOpen(false)}
+        hostel={{
+          id: hostel!.id,
+          name: hostel!.name,
+          location: hostel!.location,
+          imageUrl: hostel!.imageUrls[0],
+          availableRooms: hostel!.availableRooms,
+        }}
+        onHostelUpdated={() => {
+          setIsEditDrawerOpen(false);
+          fetchDetails();
+        }}
       />
     </div>
   );

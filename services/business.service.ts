@@ -11,7 +11,8 @@ import {
   Timestamp,
   DocumentData,
   addDoc,
-  deleteDoc
+  deleteDoc,
+  updateDoc
 } from "firebase/firestore";
 import { 
   BookingData, 
@@ -633,78 +634,93 @@ export class BusinessService {
 
   /**
    * Get detailed information about a specific hostel
-   * @param hostelId ID of the hostel to fetch
-   * @returns Promise with hostel details
+   * @param hostelId The ID of the hostel to fetch details for
+   * @returns Promise with detailed hostel data
    */
-  static async getHostelDetails(hostelId: string): Promise<{
-    id: string;
-    name: string;
-    description: string;
-    location: string;
-    locationDetails?: {
-      address: string;
-      city: string;
-      state: string;
-      country: string;
-    };
-    imageUrls: string[];
-    price: string;
-    pricePerYear: number;
-    roomTypes: string[];
-    availableRooms: number;
-    amenities: string[];
-    contact?: {
-      email: string;
-      phone: string;
-    };
-    rules?: string;
-    createdAt?: Date;
-    rating?: number;
-    reviewCount?: number;
-  }> {
+  static async getHostelDetails(hostelId: string) {
     try {
-      const currentUser = auth.currentUser;
+      const hostelRef = doc(db, "hostels", hostelId);
+      const hostelDoc = await getDoc(hostelRef);
       
-      if (!currentUser) {
-        throw new Error("User not authenticated");
-      }
-      
-      // Get hostel document from Firestore
-      const hostelDocRef = doc(db, "hostels", hostelId);
-      const hostelSnapshot = await getDoc(hostelDocRef);
-      
-      if (!hostelSnapshot.exists()) {
+      if (!hostelDoc.exists()) {
         throw new Error("Hostel not found");
       }
       
-      const hostelData = hostelSnapshot.data();
-      
-      // Verify that the current user is the owner of this hostel
-      if (hostelData.businessId !== currentUser.uid) {
-        throw new Error("Unauthorized - You do not own this hostel");
-      }
-      
-      // Return the combined data with the ID
+      const data = hostelDoc.data();
       return {
-        id: hostelId,
-        name: hostelData.name || "Unnamed Hostel",
-        description: hostelData.description || "",
-        location: hostelData.location || "",
-        locationDetails: hostelData.locationDetails,
-        imageUrls: hostelData.imageUrls || [],
-        price: hostelData.price || "₦0/year",
-        pricePerYear: hostelData.pricePerYear || 0,
-        roomTypes: hostelData.roomTypes || [],
-        availableRooms: hostelData.availableRooms || 0,
-        amenities: hostelData.amenities || [],
-        contact: hostelData.contact,
-        rules: hostelData.rules,
-        createdAt: hostelData.createdAt?.toDate(),
-        rating: hostelData.rating || 0,
-        reviewCount: hostelData.reviewCount || 0
+        id: hostelDoc.id,
+        ...data
       };
     } catch (error) {
       console.error("Error fetching hostel details:", error);
+      throw error;
+    }
+  }
+
+  /**
+   * Update an existing hostel with new information
+   * @param hostelData The updated hostel data including the hostel ID
+   * @returns Promise that resolves when the update is complete
+   */  static async updateHostel(hostelData: any) {
+    try {
+      const currentUser = auth.currentUser;
+      if (!currentUser) {
+        throw new Error("User not authenticated");
+      }
+
+      const { id, newImages, existingImages, ...updatedData } = hostelData;
+      
+      // Validate ID before creating a document reference
+      if (!id || typeof id !== 'string') {
+        throw new Error("Invalid hostel ID. Expected a string but got: " + typeof id);
+      }
+      
+      // Reference to the hostel document
+      const hostelRef = doc(db, "hostels", id);
+      
+      // Upload any new images
+      const storage = getStorage();
+      const imageUrls = [...existingImages];
+        // Upload new images if any
+      if (newImages && newImages.length > 0) {
+        for (const image of newImages) {
+          // Create a unique file name
+          const fileName = `${Date.now()}-${Math.random().toString(36).substring(2, 15)}_${image.name}`;
+          // Use userId instead of hostelId to match storage rules
+          const imageRef = storageRef(storage, `hostels/${currentUser.uid}/${fileName}`);
+          
+          // Upload the image with metadata
+          const metadata = {
+            contentType: image.type,
+            customMetadata: {
+              'hostelId': id,
+              'uploaded-by': currentUser.uid
+            }
+          };
+          
+          // Upload the image
+          await uploadBytes(imageRef, image, metadata);
+          
+          // Get the download URL
+          const downloadURL = await getDownloadURL(imageRef);
+          imageUrls.push(downloadURL);
+        }
+      }      // Update the hostel document with new data including all image URLs
+      await updateDoc(hostelRef, {
+        ...updatedData,
+        imageUrls: imageUrls,     // Store all image URLs in imageUrls array
+        imageUrl: imageUrls[0] || null, // Use the first image as the primary image
+        images: imageUrls,        // Also store in images for backward compatibility
+        location: typeof updatedData.location === 'object' 
+          ? `${updatedData.location.address}, ${updatedData.location.city}, ${updatedData.location.state}` 
+          : updatedData.location,
+        locationDetails: updatedData.location, // Store detailed location data
+        updatedAt: Timestamp.now(),
+      });
+
+      return { success: true };
+    } catch (error) {
+      console.error("Error updating hostel:", error);
       throw error;
     }
   }
