@@ -1027,8 +1027,7 @@ const HostelDetailsPage = () => {
           fetchDetails();
         }}
       />
-      
-      {/* Remove Agent Confirmation Modal */}
+        {/* Remove Agent Confirmation Modal */}
       <ConfirmationModal
         isOpen={isRemoveAgentModalOpen}
         onClose={() => {
@@ -1037,7 +1036,7 @@ const HostelDetailsPage = () => {
         }}
         onConfirm={handleRemoveAgentConfirm}
         title="Remove Agent"
-        message={`Are you sure you want to remove ${agentToRemove?.name || 'this agent'} from "${hostel?.name}"?`}
+        message={`Are you sure you want to remove ${agentToRemove?.name || 'this agent'} from "${hostel?.name}"? Any commissions they've already earned from this property will be preserved in their profile.`}
         confirmButtonText="Remove"
         cancelButtonText="Cancel"
         danger={true}

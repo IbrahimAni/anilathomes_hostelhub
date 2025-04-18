@@ -930,6 +930,134 @@ export class BusinessService {
     await updateDoc(hostelRef, { agentIds: updatedAgentIds });
     return true;
   }
+
+  /**
+   * Get a specific agent by ID with complete details including commissions
+   */
+  static async getAgentById(agentId: string): Promise<AgentCommissionData | null> {
+    try {
+      const currentUser = auth.currentUser;
+      if (!currentUser) throw new Error("User not authenticated");
+      
+      // First get the basic agent info
+      const agentRef = doc(db, "agents", agentId);
+      const agentDoc = await getDoc(agentRef);
+      
+      if (!agentDoc.exists()) return null;
+      
+      const agentData = agentDoc.data();
+      
+      // Check if this agent belongs to the current business
+      if (!agentData.businessIds?.includes(currentUser.uid)) {
+        return null; // Agent doesn't belong to this business
+      }
+      
+      // Get commission data for this agent
+      const bookingsRef = collection(db, "bookings");
+      const q = query(
+        bookingsRef,
+        where("agentId", "==", agentId),
+        where("businessId", "==", currentUser.uid)
+      );
+      const bookingsSnapshot = await getDocs(q);
+      
+      // Process booking data for this agent
+      const bookings: AgentBooking[] = bookingsSnapshot.docs.map(doc => {
+        const data = doc.data();
+        return {
+          id: doc.id,
+          studentName: data.studentName || 'Unknown',
+          hostelName: data.hostelName || 'Unknown',
+          roomNumber: data.roomNumber || 'N/A',
+          bookingDate: data.bookingDate ? new Date(data.bookingDate.toDate()).toISOString().split('T')[0] : 'N/A',
+          amount: data.amount || 0,
+          commissionAmount: data.commissionAmount || 0,
+          commissionStatus: data.commissionPaid ? 'paid' : 'pending'
+        };
+      });
+      
+      // Calculate commission totals
+      const totalCommission = bookings.reduce((sum, booking) => sum + booking.commissionAmount, 0);
+      const paidCommission = bookings
+        .filter(booking => booking.commissionStatus === 'paid')
+        .reduce((sum, booking) => sum + booking.commissionAmount, 0);
+      const pendingCommission = totalCommission - paidCommission;
+      
+      // Find the last booking date
+      let lastBookingDate = 'N/A';
+      if (bookings.length > 0) {
+        const sortedBookings = [...bookings].sort((a, b) => 
+          new Date(b.bookingDate).getTime() - new Date(a.bookingDate).getTime()
+        );
+        lastBookingDate = sortedBookings[0].bookingDate;
+      }
+      
+      // Return the complete agent data with commissions
+      return {
+        agentId,
+        agentName: agentData.displayName || 'Unknown',
+        profileImage: agentData.photoURL || '',
+        verified: agentData.verified || false,
+        active: agentData.active !== false,
+        totalCommission,
+        pendingCommission,
+        paidCommission,
+        bookingsCount: bookings.length,
+        lastBookingDate,
+        bookings
+      };
+    } catch (error) {
+      console.error("Error fetching agent details:", error);
+      return null;
+    }
+  }
+
+  /**
+   * Get all hostels that an agent is assigned to
+   * @param agentId The ID of the agent
+   * @returns Promise with list of hostels the agent is assigned to
+   */
+  static async getHostelsForAgent(agentId: string): Promise<{ id: string; name: string; location?: string }[]> {
+    try {
+      const currentUser = auth.currentUser;
+      if (!currentUser) throw new Error("User not authenticated");
+      
+      // First verify this agent belongs to the business
+      const agentRef = doc(db, "agents", agentId);
+      const agentDoc = await getDoc(agentRef);
+      
+      if (!agentDoc.exists() || !agentDoc.data().businessIds?.includes(currentUser.uid)) {
+        return []; // Agent not found or doesn't belong to this business
+      }
+      
+      // Query all hostels owned by this business
+      const hostelsRef = collection(db, "hostels");
+      const q = query(hostelsRef, where("businessId", "==", currentUser.uid));
+      const hostelsSnapshot = await getDocs(q);
+      
+      const assignedHostels = [];
+      
+      // Check each hostel to see if this agent is assigned to it
+      for (const hostelDoc of hostelsSnapshot.docs) {
+        const hostelData = hostelDoc.data();
+        const agentIds = hostelData.agentIds || [];
+        
+        // If this agent is in the hostel's agentIds array, add it to the results
+        if (agentIds.includes(agentId)) {
+          assignedHostels.push({
+            id: hostelDoc.id,
+            name: hostelData.name || "Unnamed Hostel",
+            location: hostelData.location || "",
+          });
+        }
+      }
+      
+      return assignedHostels;
+    } catch (error) {
+      console.error("Error fetching hostels for agent:", error);
+      return [];
+    }
+  }
 }
 
 // Helper functions

@@ -86,14 +86,12 @@ export default function AgentDetailPage() {
       console.error("Error processing payment:", error);
       toast.error("Failed to process payment");
     }
-  };
-  // Fetch agent details
+  };  // Fetch agent details
   const fetchAgentDetails = async () => {
     setLoading(true);
     try {
-      // Get agent commission data
-      const agentsData = await BusinessService.getAgentCommissions(100);
-      const currentAgent = agentsData.find((a) => a.agentId === agentId);
+      // Get agent details with the new dedicated method
+      const currentAgent = await BusinessService.getAgentById(agentId);
 
       if (!currentAgent) {
         toast.error("Agent not found");
@@ -103,24 +101,42 @@ export default function AgentDetailPage() {
 
       setAgent(currentAgent);
 
-      // Derive hostels list from agent bookings
+      // Get hostels this agent is assigned to
+      const assignedHostels = await BusinessService.getHostelsForAgent(agentId);
+      
+      // Create map of hostels from agent bookings and assigned hostels
       const hostelMap: Record<
         string,
         { id: string; name: string; location?: string; roomsReferred: number }
       > = {};
+      
+      // First add all assigned hostels
+      assignedHostels.forEach((hostel) => {
+        hostelMap[hostel.id] = {
+          id: hostel.id,
+          name: hostel.name,
+          location: hostel.location || "",
+          roomsReferred: 0, // Will be incremented if there are bookings
+        };
+      });
+      
+      // Then add booking data
       currentAgent.bookings.forEach((booking) => {
         const key = booking.hostelName;
-        if (!hostelMap[key]) {
+        // If the hostel exists in the map, just increment referrals
+        if (hostelMap[key]) {
+          hostelMap[key].roomsReferred += 1;
+        } else {
+          // Otherwise add a new entry
           hostelMap[key] = {
             id: booking.id,
             name: booking.hostelName,
             location: "",
             roomsReferred: 1,
           };
-        } else {
-          hostelMap[key].roomsReferred += 1;
         }
       });
+      
       setMappedHostels(Object.values(hostelMap));
 
       // Derive payment history from paid commissions in bookings

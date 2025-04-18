@@ -34,15 +34,22 @@ const PropertiesPage = () => {
   const [isDeleting, setIsDeleting] = useState(false);
   const [isEditHostelDrawerOpen, setIsEditHostelDrawerOpen] = useState(false);
   const [propertyToEdit, setPropertyToEdit] = useState<{id: string, name: string, location?: string, imageUrl?: string, availableRooms?: number} | null>(null);
-
   // Function to fetch data for a selected property
   const fetchPropertyData = useCallback(async (propertyId: string) => {
     try {
       setLoading(true);
       
-      // Fetch agent commission data
-      const agents = await BusinessService.getAgentCommissions();
-      setAgentsData(agents);
+      // Fetch agent commission data specifically for this hostel
+      const agents = await BusinessService.getAgentCommissions(propertyId);
+      
+      // Filter to only show agents that have commissions
+      const agentsWithCommissions = agents.filter(agent => 
+        agent.totalCommission > 0 || 
+        agent.pendingCommission > 0 || 
+        agent.bookingsCount > 0
+      );
+      
+      setAgentsData(agentsWithCommissions);
     } catch (error) {
       console.error(`Error fetching data for property ${propertyId}:`, error);
     } finally {
