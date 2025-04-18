@@ -1,8 +1,8 @@
 import { test, expect } from "@playwright/test";
 import { testData as SignUpData } from "@/tests-utils/data/testData";
 import { cleanupTestUsers } from "@/tests-utils/helpers/cleanupTestData/cleanupTestUsers";
-import { genTestUserEmailData } from "@/tests-utils/helpers/generateTestUserData/genUserTestEmailData";
-import { genStudentTestUser } from "@/tests-utils/helpers/generateTestUserData/studentUserData";
+import { genTestUserEmailData } from "@/tests-utils/helpers/gen/generateTestUserData/genUserTestEmailData";
+import { genStudentTestUser } from "@/tests-utils/helpers/gen/generateTestUserData/studentUserData";
 
 test.describe("Signup test suite", () => {
   const {

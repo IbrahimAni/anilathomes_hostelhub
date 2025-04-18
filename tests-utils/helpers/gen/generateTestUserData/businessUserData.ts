@@ -1,26 +1,26 @@
 import { db } from '@/config/firebase-admin';
-import { genRandomNumber } from '../genRandomNumber';
+import { genRandomNumber } from '../../genRandomNumber';
 import { testData } from '@/tests-utils/data/testData';
-import { createTestUser } from '../functions/createTestUserHelper';
+import { createTestUser } from '../../functions/createTestUserHelper';
 import type { UserRole } from '@/types/user';
 
 const {userProfile} = testData;
 const testEmailDomain = "@wptest.com";
-const userRole: UserRole = "agent";
+const userRole: UserRole = "business";
 
 /**
- * Generates a test user with agent role for testing purposes
+ * Generates a test user with business role for testing purposes
  * @returns Promise with an object containing the user ID and email
  */
-export const genAgentTestUser = async (testEmail? : string): Promise<{userId: string, email: string, displayName: string}> => {
+export const genBusinessTestUser = async (testEmail? : string): Promise<{userId: string, email: string, displayName: string}> => {
   try {
-    const agentEmail = testEmail || `agent-test-user-${genRandomNumber()}${testEmailDomain}`;
+    const businessEmail = testEmail || `business-test-user-${genRandomNumber()}${testEmailDomain}`;
     
     // Set expiration timestamp (24 hours from now)
     const expiresAt = new Date();
     expiresAt.setHours(expiresAt.getHours() + 2);
 
-    const userRecord = await createTestUser(agentEmail, userProfile.displayName);
+    const userRecord = await createTestUser(businessEmail, userProfile.displayName);
 
     await db.collection("users").doc(userRecord.uid).set({
       uid: userRecord.uid,
@@ -35,10 +35,10 @@ export const genAgentTestUser = async (testEmail? : string): Promise<{userId: st
       expiresAt,
     });
 
-return {
-    userId: userRecord.uid,
-    email: agentEmail,
-    displayName: "Alice Johnson",
+  return {
+      userId: userRecord.uid,
+      email: businessEmail,
+      displayName: "John Doe",
     };
   } catch (error) {
     console.error('Error creating test user:', error);

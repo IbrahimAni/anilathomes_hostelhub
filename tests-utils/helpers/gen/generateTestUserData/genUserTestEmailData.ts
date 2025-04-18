@@ -1,5 +1,5 @@
 import { UserRole } from "@/types/user";
-import { genRandomNumber } from "../genRandomNumber";
+import { genRandomNumber } from "../../genRandomNumber";
 
 export const genTestUserEmailData = (userRole: UserRole, testEmail?: string): string => {
     const emailDomain = "@wptest.com";

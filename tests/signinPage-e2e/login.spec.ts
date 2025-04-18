@@ -1,8 +1,8 @@
 import { test, expect } from "@playwright/test";
 import { testData as LoginData } from "@/tests-utils/data/testData";
-import { genStudentTestUserWithCompletedProfile } from "@/tests-utils/helpers/generateTestUserData/studentUserData";
-import { genAgentTestUser } from "@/tests-utils/helpers/generateTestUserData/agentUserData";
-import { genBusinessTestUser } from "@/tests-utils/helpers/generateTestUserData/businessUserData";
+import { genStudentTestUserWithCompletedProfile } from "@/tests-utils/helpers/gen/generateTestUserData/studentUserData";
+import { genAgentTestUser } from "@/tests-utils/helpers/gen/generateTestUserData/agentUserData";
+import { genBusinessTestUser } from "@/tests-utils/helpers/gen/generateTestUserData/businessUserData";
 import { cleanupTestUsers } from "@/tests-utils/helpers/cleanupTestData/cleanupTestUsers";
 
 test.describe("Login suite", () => {

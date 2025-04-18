@@ -1,5 +1,5 @@
 import { test, expect } from "@playwright/test";
-import { genStudentTestUser } from "@/tests-utils/helpers/generateTestUserData/studentUserData";
+import { genStudentTestUser } from "@/tests-utils/helpers/gen/generateTestUserData/studentUserData";
 import { testData } from "@/tests-utils/data/testData";
 import { cleanupTestUsers } from "@/tests-utils/helpers/cleanupTestData/cleanupTestUsers";
 

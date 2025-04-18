@@ -1,7 +1,7 @@
 import { db } from '@/config/firebase-admin';
-import { genRandomNumber } from '../genRandomNumber';
+import { genRandomNumber } from '../../genRandomNumber';
 import { testData } from '@/tests-utils/data/testData';
-import { createTestUser } from '../functions/createTestUserHelper';
+import { createTestUser } from '../../functions/createTestUserHelper';
 import type { UserRole } from '@/types/user';
 
 const {userProfile} = testData;
