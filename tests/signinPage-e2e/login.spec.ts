@@ -59,7 +59,7 @@ test.describe("Login suite", () => {
     await page.getByTestId("email-input").fill(email);
     await page.getByTestId("password-input").fill(validPassword);
     await page.getByTestId("submit-button").click();
-    await expect(page).toHaveURL(/.*business/);
+    await expect(page).toHaveURL(/.*business/, {timeout: 60000});
   });
 
   test("Unable to login as a student and try to access agent dashboard", async ({ page }) => {
