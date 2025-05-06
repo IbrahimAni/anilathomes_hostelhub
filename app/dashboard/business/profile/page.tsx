@@ -236,9 +236,9 @@ export default function BusinessProfilePage() {
                   />
                 </div>
               </div>
-              <h3 className="mt-4 text-xl font-bold text-center text-white">
-                {businessName || "Your Business"}
-              </h3>
+                <h3 className="mt-4 text-xl font-bold text-center text-white" data-testid="business-profile-name" >
+                {businessName || "Business Name"}
+                </h3>
               <p className="text-indigo-100 text-center text-sm">{businessType || "Hospitality"}</p>
             </div>
             

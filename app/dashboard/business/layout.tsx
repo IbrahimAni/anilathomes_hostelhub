@@ -43,19 +43,17 @@ function BusinessDashboardContent({ children }: { children: React.ReactNode }) {
     { name: "Business Profile", path: "/dashboard/business/profile", icon: "user-tie" },
     { name: "Settings", path: "/dashboard/business/settings", icon: "cog" },
   ];
-
   return (
-    <div className="flex h-screen bg-gray-50">
+    <div className="flex h-screen bg-gray-50" data-testid="business-dashboard-container">
       {/* Sidebar for desktop */}
-      <aside className="hidden md:flex md:flex-col md:w-64 md:fixed md:inset-y-0 bg-white shadow-lg">
+      <aside className="hidden md:flex md:flex-col md:w-64 md:fixed md:inset-y-0 bg-white shadow-lg" data-testid="desktop-sidebar">
         <div className="px-6 pt-8 pb-4 flex flex-col">
-          <h1 className="text-xl font-bold text-indigo-600">
-            {businessName || "Business Name"}
+          <h1 className="text-xl font-bold text-indigo-600" data-testid="business-name-display">
+            {businessName}
           </h1>
           <p className="text-xs text-gray-500 mt-1">HostelHub Business</p>
-        </div>
-        <div className="flex-1 px-4 space-y-1 overflow-y-auto">
-          <nav className="mt-8 space-y-2">
+        </div>        <div className="flex-1 px-4 space-y-1 overflow-y-auto" data-testid="desktop-nav-container">
+          <nav className="mt-8 space-y-2" data-testid="desktop-navigation">
             {navItems.map((item) => (
               <Link
                 key={item.name}
@@ -81,13 +79,13 @@ function BusinessDashboardContent({ children }: { children: React.ReactNode }) {
               </Link>
             ))}
           </nav>
-        </div>
-        <div className="px-6 py-4 border-t border-gray-200">
+        </div>        <div className="px-6 py-4 border-t border-gray-200" data-testid="desktop-logout-container">
           <button
             onClick={handleLogout}
             disabled={isLoggingOut}
             className="w-full flex items-center px-4 py-2 text-sm text-red-600 hover:bg-red-50 rounded-lg transition-colors"
             aria-label="Logout"
+            data-testid="desktop-logout-button"
           >
             <span className="mr-3 h-5 w-5 flex items-center justify-center">
               <i className="fas fa-sign-out-alt" aria-hidden="true"></i>
@@ -95,13 +93,11 @@ function BusinessDashboardContent({ children }: { children: React.ReactNode }) {
             <span>{isLoggingOut ? "Logging out..." : "Logout"}</span>
           </button>
         </div>
-      </aside>
-
-      {/* Mobile menu button */}
-      <div className="md:hidden fixed top-0 left-0 right-0 z-10 bg-white shadow-sm">
+      </aside>      {/* Mobile menu button */}
+      <div className="md:hidden fixed top-0 left-0 right-0 z-10 bg-white shadow-sm" data-testid="mobile-header">
         <div className="px-4 py-3 flex items-center justify-between">
-          <div>
-            <h1 className="text-lg font-bold text-indigo-600">
+          <div data-testid="mobile-business-header">
+            <h1 className="text-lg font-bold text-indigo-600" data-testid="mobile-business-name">
               {businessName || "Business Name"}
             </h1>
             <p className="text-xs text-gray-500">HostelHub Business</p>
@@ -123,17 +119,18 @@ function BusinessDashboardContent({ children }: { children: React.ReactNode }) {
         </div>
       </div>
 
-      {/* Mobile menu */}
-      {isMenuOpen && (
+      {/* Mobile menu */}      {isMenuOpen && (
         <div
           className="md:hidden fixed inset-0 z-20 bg-gray-800 bg-opacity-50"
           onClick={() => setIsMenuOpen(false)}
           aria-hidden="true"
+          data-testid="mobile-menu-overlay"
         >
           <div
             className="fixed inset-y-0 left-0 z-30 w-64 bg-white shadow-xl transform transition ease-in-out duration-300"
             onClick={(e) => e.stopPropagation()}
             id="mobile-menu"
+            data-testid="mobile-menu-drawer"
           >
             <div className="px-6 pt-8 pb-4 flex flex-col">
               <h1 className="text-xl font-bold text-indigo-600">
@@ -197,27 +194,26 @@ function BusinessDashboardContent({ children }: { children: React.ReactNode }) {
             </div>
           </div>
         </div>
-      )}
-
-      {/* Main content */}
-      <main className="md:ml-64 flex-1 overflow-y-auto pb-10">
+      )}      {/* Main content */}
+      <main className="md:ml-64 flex-1 overflow-y-auto pb-10" data-testid="main-content">
         <div className="md:hidden h-14"></div>
         
         {/* Business Name Banner */}
         {showBanner && (
-          <div className="bg-amber-50 border-l-4 border-amber-400 p-4 mb-6 mx-4 sm:mx-6 lg:mx-8 mt-4 relative">
+          <div className="bg-amber-50 border-l-4 border-amber-400 p-4 mb-6 mx-4 sm:mx-6 lg:mx-8 mt-4 relative" data-testid="business-name-banner">
             <div className="flex items-start">
               <div className="flex-shrink-0 pt-0.5">
                 <i className="fas fa-info-circle text-amber-500 text-lg"></i>
               </div>
               <div className="ml-3 flex-1">
-                <h3 className="text-sm font-medium text-amber-800">Personalize your dashboard</h3>
-                <div className="mt-1 text-sm text-amber-700">
+                <h3 className="text-sm font-medium text-amber-800"  data-testid="business-name-banner-header">Personalize your dashboard</h3>
+                <div className="mt-1 text-sm text-amber-700" data-testid="business-name-banner-description">
                   <p>You&apos;re currently using the default business name. Personalize your experience by setting your actual business name.</p>
                 </div>
                 <div className="mt-3">
                   <Link 
-                    href="/dashboard/business/settings" 
+                    href="/dashboard/business/profile" 
+                    data-testid="update-business-name-button"
                     className="inline-flex items-center px-3 py-1.5 border border-transparent text-xs font-medium rounded-md shadow-sm text-white bg-amber-500 hover:bg-amber-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-amber-500"
                   >
                     <i className="fas fa-cog mr-1.5"></i> Update Business Name

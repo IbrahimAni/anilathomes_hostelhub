@@ -231,7 +231,7 @@ const PropertiesPage = () => {
                           : 'text-gray-600 hover:bg-white/[0.12] hover:text-indigo-600'
                       )
                     }
-                    data-testid={`property-tab-${property.id}`}
+                    data-testid={`property-tab-${property.name}`}
                   >
                     {property.name}
                   </Tab>
@@ -408,7 +408,7 @@ const PropertiesPage = () => {
                             <div>
                               <p className="text-sm text-gray-500">Total Rooms</p>
                               <div className="flex items-baseline">
-                                <p className="text-2xl font-bold text-indigo-700">{property.availableRooms || 0}</p>
+                                <p className="text-2xl font-bold text-indigo-700" data-testid="totalRoomCountSummary">{property.availableRooms || 0}</p>
                                 <p className="text-xs text-gray-500 ml-2">units</p>
                               </div>
                             </div>
@@ -422,7 +422,7 @@ const PropertiesPage = () => {
                             <div>
                               <p className="text-sm text-gray-500">Available</p>
                               <div className="flex items-baseline">
-                                <p className="text-2xl font-bold text-green-600">{property.availableRooms || 0}</p>
+                                <p className="text-2xl font-bold text-green-600" data-testid="availableRoomCountSummary">{property.availableRooms || 0}</p>
                                 <p className="text-xs text-gray-500 ml-2">({property.availableRooms ? '100%' : '0%'})</p>
                               </div>
                             </div>
@@ -436,7 +436,7 @@ const PropertiesPage = () => {
                             <div>
                               <p className="text-sm text-gray-500">Occupied</p>
                               <div className="flex items-baseline">
-                                <p className="text-2xl font-bold text-amber-600">0</p>
+                                <p className="text-2xl font-bold text-amber-600" data-testid="occupiedRoomCountSummary" >0</p>
                                 <p className="text-xs text-gray-500 ml-2">(0%)</p>
                               </div>
                             </div>
@@ -502,14 +502,6 @@ const PropertiesPage = () => {
         onClose={handleCloseAddHostelModal}
         onHostelAdded={handleHostelAdded}
       />
-      {/* 
-        FIX REQUIRED IN: @/components/dashboard/business/EditHostelDrawer.tsx
-        The 'EditHostelDrawer' component function currently returns 'void'. 
-        It needs to be updated to return JSX (e.g., `JSX.Element` or `React.ReactElement | null`).
-        Example (in EditHostelDrawer.tsx):
-        - const EditHostelDrawer = (...): void => { ... } 
-        + const EditHostelDrawer = (...): JSX.Element | null => { ... return (<div>...</div>); } 
-      */}
       <EditHostelDrawer
         isOpen={isEditHostelDrawerOpen}
         onClose={() => setIsEditHostelDrawerOpen(false)}

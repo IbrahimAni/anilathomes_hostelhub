@@ -17,5 +17,11 @@ export const testData = {
     level: "200",
     university: "unilag",
     phoneNumber: "+2348167820406"
+  },
+  business: {
+    business_name: "Luxury Living",
+  },
+  hostelImgs: {
+    img1Path: "tests-utils/img/hostelRoom.jpg",
   }
 };

@@ -13,8 +13,10 @@ if(!admin.apps || admin.apps.length === 0) {
   admin.initializeApp({
     credential: admin.credential.cert(serviceAccount as admin.ServiceAccount),
     databaseURL: "https://anilathomes-hostelhub.firebaseio.com",
+    storageBucket: "anilathomes-hostelhub.appspot.com"
   });
 }
 
 export const db = admin.firestore();
 export const auth = admin.auth();
+export const storage = admin.storage();

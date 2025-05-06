@@ -34,7 +34,7 @@ export const BusinessProvider = ({ children }: { children: ReactNode }) => {
             setBusinessName(userProfile.businessName);
             setIsDefaultName(false);
           } else {
-            setBusinessName('My Business');
+            setBusinessName('Business Name');
             setIsDefaultName(true);
           }
         }
