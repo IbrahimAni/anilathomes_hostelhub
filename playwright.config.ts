@@ -11,6 +11,7 @@ export default defineConfig({
     reuseExistingServer: !process.env.CI,
     timeout: 120000
   },
+  retries: process.env.CI ? 2 : 0,
   use: {
     browserName: "chromium",
     headless: true,
