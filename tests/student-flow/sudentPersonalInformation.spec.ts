@@ -38,7 +38,7 @@ test.describe("Update Student Personal Information", () => {
     );
   });
 
-  test.fixme("fill the personal information and click Save Changes button", async ({
+  test("fill the personal information and click Save Changes button", async ({
     page,
   }) => {
     await page.getByTestId("input-phoneNumber").fill("+2348167820406");

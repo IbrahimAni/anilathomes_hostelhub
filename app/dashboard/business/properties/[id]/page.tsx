@@ -725,7 +725,7 @@ const HostelDetailsPage = () => {
                 <div>
                   <p className="text-sm text-gray-500">Total Rooms</p>
                   <div className="flex items-baseline">
-                    <p className="text-2xl font-bold text-indigo-700">
+                    <p className="text-2xl font-bold text-indigo-700" data-testid="total-rooms">
                       {hostel.availableRooms || 0}
                     </p>
                     <p className="text-xs text-gray-500 ml-2">units</p>
@@ -753,7 +753,7 @@ const HostelDetailsPage = () => {
                 <div>
                   <p className="text-sm text-gray-500">Available</p>
                   <div className="flex items-baseline">
-                    <p className="text-2xl font-bold text-green-600">
+                    <p className="text-2xl font-bold text-green-600" data-testid="available-rooms">
                       {hostel.availableRooms || 0}
                     </p>
                     <p className="text-xs text-gray-500 ml-2">
@@ -783,7 +783,7 @@ const HostelDetailsPage = () => {
                 <div>
                   <p className="text-sm text-gray-500">Occupied</p>
                   <div className="flex items-baseline">
-                    <p className="text-2xl font-bold text-amber-600">0</p>
+                    <p className="text-2xl font-bold text-amber-600" data-testid="occupied-rooms">0</p>
                     <p className="text-xs text-gray-500 ml-2">(0%)</p>
                   </div>
                 </div>

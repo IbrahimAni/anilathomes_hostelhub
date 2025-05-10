@@ -313,7 +313,7 @@ const PropertiesPage = () => {
                             </div>                            <div className="mt-4 md:mt-0 space-x-2">
                               <button 
                                 className="text-sm bg-white border border-gray-300 text-gray-700 py-1 px-3 rounded hover:bg-gray-50 transition-colors"
-                                data-testid={`edit-property-${property.id}`}
+                                data-testid={`edit-property`}
                                 onClick={() => {
                                   setPropertyToEdit(property);
                                   setIsEditHostelDrawerOpen(true);
@@ -337,7 +337,7 @@ const PropertiesPage = () => {
                               </button>
                               <button 
                                 className="text-sm bg-white border border-gray-300 text-gray-700 py-1 px-3 rounded hover:bg-gray-50 transition-colors"
-                                data-testid={`view-details-${property.id}`}
+                                data-testid={`view-details`}
                                 onClick={() => router.push(`/dashboard/business/properties/${property.id}`)}
                               >
                                 <svg
@@ -364,7 +364,7 @@ const PropertiesPage = () => {
                               </button>
                               <button 
                                 className="text-sm bg-white border border-red-300 text-red-700 py-1 px-3 rounded hover:bg-red-50 transition-colors"
-                                data-testid={`delete-property-${property.id}`}
+                                data-testid={`delete-property`}
                                 onClick={() => handleDeleteClick({id: property.id, name: property.name})}
                               >
                                 <svg

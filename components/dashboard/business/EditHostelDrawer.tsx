@@ -437,7 +437,7 @@ export default function EditHostelDrawer({
           <div className="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity" />
         </Transition.Child>
 
-        <div className="fixed inset-0 overflow-hidden">
+        <div className="fixed inset-0 overflow-hidden" data-testid="edit-hostel-drawer">
           <div className="absolute inset-0 overflow-hidden">
             <div className="pointer-events-none fixed inset-y-0 right-0 flex max-w-full pl-10">
               <Transition.Child
@@ -571,6 +571,7 @@ export default function EditHostelDrawer({
                                 type="file"
                                 name="images"
                                 accept="image/*"
+                                data-testid="property-images"
                                 multiple
                                 onChange={handleImageChange}
                                 className="mt-1 block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-medium file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100"
